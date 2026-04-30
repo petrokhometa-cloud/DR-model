@@ -1300,7 +1300,7 @@ function runClientSim(){
     // True DR (without retry declines)
     let wA2=totalAuth-retryDecl-retryRecov,wD2=origDecl;
     for(let j=ws;j<simData.length;j++){wA2+=(simData[j].tAuth-simData[j].retryDecl-(simData[j].retryRecov||0));wD2+=simData[j].origDecl;}
-    const trueDR=wA2>0?(wD2/wA2)*100:0;
+    const trueDR=wA2>0?Math.min(100,(wD2/wA2)*100):0;
 
     const isGrace=day<=grace;
     if(canBlock){
@@ -1476,7 +1476,7 @@ function runSim(){
     // True DR (without retries)
     let wA2=auth+vToday,wD2=decl;
     for(let i=ws;i<simData.length;i++){wA2+=(simData[i].auth+simData[i].vfy);wD2+=simData[i].origDecl;}
-    const trueDR=wA2>0?(wD2/wA2)*100:0;
+    const trueDR=wA2>0?Math.min(100,(wD2/wA2)*100):0;
 
     const isGrace=day<=grace;
     if(canBlock){

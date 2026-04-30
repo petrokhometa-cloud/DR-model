@@ -1,0 +1,1964 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Decline Fee Simulator — Spendbase</title>
+<style>
+  :root{--bg:#f5f6fa;--card:#fff;--border:#e2e5ed;--text:#1e1e2e;--muted:#6b7085;--green:#16a34a;--yellow:#ca8a04;--orange:#ea580c;--red:#dc2626;--darkred:#991b1b;--blue:#2563eb;--accent:#6366f1;--accent-light:#eef2ff;--input-bg:#f8f9fc;--teal:#0d9488}
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:'Inter',-apple-system,system-ui,sans-serif;background:var(--bg);color:var(--text);line-height:1.5}
+  .container{max-width:1440px;margin:0 auto;padding:24px}
+  h1{font-size:26px;font-weight:700}
+  .subtitle{color:var(--muted);font-size:14px;margin-bottom:20px}
+  .card{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:24px;margin-bottom:20px;box-shadow:0 1px 3px rgba(0,0,0,.04)}
+  .card h2{font-size:17px;font-weight:600;margin-bottom:16px;display:flex;align-items:center;gap:8px}
+  .info-tip{display:inline-flex;align-items:center;justify-content:center;width:16px;height:16px;border-radius:50%;background:var(--border);color:var(--muted);font-size:10px;font-weight:700;cursor:help;position:relative;margin-left:4px;flex-shrink:0}
+  .info-tip:hover .tip-text{display:block}
+  .tip-text{display:none;position:absolute;bottom:calc(100% + 6px);left:50%;transform:translateX(-50%);background:var(--text);color:#fff;padding:8px 12px;border-radius:8px;font-size:12px;font-weight:400;width:280px;z-index:100;line-height:1.4;box-shadow:0 4px 12px rgba(0,0,0,.15)}
+  .tip-text::after{content:'';position:absolute;top:100%;left:50%;transform:translateX(-50%);border:5px solid transparent;border-top-color:var(--text)}
+  th[title]{cursor:help;text-decoration:underline dotted var(--border);text-underline-offset:3px}
+  .legend-toggle{font-size:13px;color:var(--accent);cursor:pointer;font-weight:600;display:inline-flex;align-items:center;gap:4px;margin-bottom:12px;user-select:none}
+  .legend-toggle:hover{color:#5558e6}
+  .legend-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:6px 16px;padding:14px 16px;background:var(--input-bg);border-radius:10px;border:1px solid var(--border);margin-bottom:14px;font-size:12px}
+  .legend-item{display:flex;gap:6px;align-items:baseline}
+  .legend-item b{color:var(--text);white-space:nowrap;min-width:60px}
+  .legend-item span{color:var(--muted)}
+  .form-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:14px}
+  .form-group{display:flex;flex-direction:column;gap:5px}
+  .form-group label{font-size:13px;color:var(--muted);font-weight:500;display:flex;align-items:center}
+  input[type="number"],input[type="text"],input[type="date"],select{background:var(--input-bg);border:1px solid var(--border);border-radius:8px;padding:9px 12px;color:var(--text);font-size:14px;width:100%}
+  input:focus,select:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 3px rgba(99,102,241,.1)}
+  input[type="range"]{accent-color:var(--accent)}
+  .btn{padding:10px 20px;border-radius:8px;font-size:14px;font-weight:600;cursor:pointer;border:none;transition:all .15s}
+  .btn-primary{background:var(--accent);color:#fff}.btn-primary:hover{background:#5558e6}
+  .btn-secondary{background:var(--bg);color:var(--text);border:1px solid var(--border)}.btn-secondary:hover{background:var(--border)}
+  .btn-small{padding:6px 12px;font-size:12px}
+  .dual-range{position:relative;height:36px;margin-top:4px}
+  .dual-range input[type="range"]{position:absolute;width:100%;top:0;height:36px;pointer-events:none;-webkit-appearance:none;appearance:none;background:transparent;z-index:2}
+  .dual-range input[type="range"]::-webkit-slider-thumb{pointer-events:all;-webkit-appearance:none;width:18px;height:18px;border-radius:50%;background:var(--accent);border:2px solid #fff;box-shadow:0 1px 4px rgba(0,0,0,.2);cursor:pointer;position:relative;z-index:3}
+  .dual-range input[type="range"]::-moz-range-thumb{pointer-events:all;width:18px;height:18px;border-radius:50%;background:var(--accent);border:2px solid #fff;box-shadow:0 1px 4px rgba(0,0,0,.2);cursor:pointer}
+  .dual-range-track{position:absolute;top:50%;transform:translateY(-50%);height:6px;width:100%;background:var(--border);border-radius:3px;z-index:0}
+  .dual-range-fill{position:absolute;top:50%;transform:translateY(-50%);height:6px;background:var(--accent);border-radius:3px;z-index:1}
+  .dual-range-values{display:flex;justify-content:space-between;margin-top:2px;font-size:13px;color:var(--text);font-weight:600}
+  .events-list{display:flex;flex-direction:column;gap:8px;margin-top:12px}
+  .event-item{display:flex;align-items:center;gap:12px;padding:10px 14px;background:var(--input-bg);border-radius:8px;border-left:3px solid var(--accent);font-size:13px}
+  .event-item .day-badge{background:var(--accent);color:#fff;padding:2px 10px;border-radius:12px;font-size:12px;font-weight:600;white-space:nowrap}
+  .event-item .event-desc{flex:1}.event-item .event-remove{cursor:pointer;color:var(--muted);font-size:18px}.event-item .event-remove:hover{color:var(--red)}
+  .et-topup{border-left-color:var(--green)}.et-topup .day-badge{background:var(--green)}
+  .et-verif{border-left-color:var(--blue)}.et-verif .day-badge{background:var(--blue)}
+  .et-pause{border-left-color:var(--orange)}.et-pause .day-badge{background:var(--orange)}
+  .et-custom{border-left-color:var(--muted)}.et-custom .day-badge{background:var(--muted)}
+  .progress-bar-wrapper{position:relative;height:36px;background:var(--bg);border-radius:18px;overflow:hidden;border:1px solid var(--border)}
+  .progress-bar-zones{position:absolute;top:0;left:0;right:0;bottom:0;display:flex}
+  .progress-zone{height:100%}
+  .pz-green{background:linear-gradient(90deg,#bbf7d0,#4ade80)}.pz-yellow{background:linear-gradient(90deg,#fef08a,#facc15)}.pz-orange{background:linear-gradient(90deg,#fed7aa,#fb923c)}.pz-red{background:linear-gradient(90deg,#fca5a5,#ef4444)}
+  .progress-fill{position:absolute;top:0;left:0;height:100%;background:rgba(0,0,0,.1);border-right:3px solid var(--text);transition:width .4s ease;z-index:2}
+  .progress-markers{position:relative;height:18px;margin-top:4px;font-size:11px;color:var(--muted)}
+  .progress-marker{position:absolute;transform:translateX(-50%)}
+  .progress-dr-label{position:absolute;top:50%;right:12px;transform:translateY(-50%);font-size:18px;font-weight:700;z-index:3}
+  .progress-status{display:flex;justify-content:space-between;margin-top:10px;font-size:13px;flex-wrap:wrap;gap:8px}
+  .progress-status span{display:flex;align-items:center;gap:5px}
+  .status-dot{width:8px;height:8px;border-radius:50%;display:inline-block}
+  .summary-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:12px;margin-bottom:16px}
+  .summary-card{background:var(--input-bg);border-radius:10px;padding:14px;text-align:center;border:1px solid var(--border)}
+  .summary-card .value{font-size:22px;font-weight:700}.summary-card .label{font-size:11px;color:var(--muted);margin-top:2px;text-transform:uppercase;letter-spacing:.3px}
+  .results-table-wrapper{overflow-x:auto;margin-top:12px}
+  table{width:100%;border-collapse:collapse;font-size:12px;table-layout:auto}
+  th{background:var(--input-bg);padding:8px 6px;text-align:left;font-weight:600;color:var(--muted);border-bottom:2px solid var(--border);position:sticky;top:0;z-index:5;white-space:nowrap;font-size:11px}
+  td{padding:6px;border-bottom:1px solid var(--border);white-space:nowrap}
+  tr:hover td{background:var(--accent-light)}
+  tr.grace-row td{color:var(--muted)}tr.blocked-row td{background:#fef2f2}
+  .fee-cell{font-weight:600}
+  .tier-badge{padding:2px 8px;border-radius:10px;font-size:11px;font-weight:600;display:inline-block;white-space:nowrap}
+  .tier-free{background:#dcfce7;color:var(--green)}.tier-warning{background:#fefce8;color:var(--yellow)}.tier-elevated{background:#fff7ed;color:var(--orange)}.tier-critical{background:#fef2f2;color:var(--red)}.tier-blocked{background:#fecaca;color:var(--darkred)}.tier-grace{background:var(--accent-light);color:var(--accent)}
+  .chart-container{position:relative;height:200px;margin:12px 0;overflow:hidden}
+  .chart-container canvas{width:100%!important;height:100%!important;display:block}
+  .hidden{display:none!important}
+  .section-divider{border-top:1px solid var(--border);margin:18px 0 14px}
+  .add-event-form{display:flex;gap:10px;align-items:flex-end;flex-wrap:wrap;margin-top:16px;padding-top:16px;border-top:1px solid var(--border)}
+  .add-event-form .form-group{min-width:100px}
+  .two-cols{display:grid;grid-template-columns:1fr 1fr;gap:20px}
+  @media(max-width:900px){.two-cols{grid-template-columns:1fr}}
+  .tabs{display:flex;gap:0;margin-bottom:24px;border-bottom:2px solid var(--border)}
+  .tab-btn{padding:12px 24px;font-size:15px;font-weight:600;cursor:pointer;border:none;background:none;color:var(--muted);border-bottom:2px solid transparent;margin-bottom:-2px;transition:all .15s}
+  .tab-btn:hover{color:var(--text)}
+  .tab-btn.active{color:var(--accent);border-bottom-color:var(--accent)}
+  .tab-content{display:none}.tab-content.active{display:block}
+  .upload-zone{border:2px dashed var(--border);border-radius:12px;padding:32px;text-align:center;cursor:pointer;transition:all .2s;background:var(--input-bg)}
+  .upload-zone:hover,.upload-zone.dragover{border-color:var(--accent);background:var(--accent-light)}
+  .upload-zone .icon{font-size:36px;margin-bottom:8px}
+  .upload-zone .label{font-size:14px;color:var(--muted)}
+  .upload-zone .filename{font-size:13px;color:var(--accent);font-weight:600;margin-top:6px}
+  .upload-zone.has-file{border-color:var(--green);background:#f0fdf4}
+  .upload-zone.has-file .icon{color:var(--green)}
+  .csv-preview{margin-top:12px;font-size:12px;color:var(--muted);max-height:100px;overflow-y:auto;background:var(--input-bg);border-radius:8px;padding:8px 12px;text-align:left}
+  .parsed-stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:10px;margin-top:16px}
+  .parsed-stat{background:var(--input-bg);border-radius:8px;padding:10px;text-align:center;border:1px solid var(--border)}
+  .parsed-stat .val{font-size:18px;font-weight:700;color:var(--accent)}.parsed-stat .lbl{font-size:11px;color:var(--muted);margin-top:2px}
+  .retry-tax-card{background:linear-gradient(135deg,#fef2f2,#fff7ed);border:1px solid #fecaca;border-radius:12px;padding:20px;margin-bottom:20px}
+  .retry-tax-card h2{font-size:17px;font-weight:600;margin-bottom:12px;color:var(--red)}
+  .retry-tax-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:12px}
+  .retry-tax-item{background:rgba(255,255,255,.7);border-radius:10px;padding:14px;text-align:center;border:1px solid rgba(220,38,38,.15)}
+  .retry-tax-item .val{font-size:22px;font-weight:700}.retry-tax-item .lbl{font-size:11px;color:var(--muted);margin-top:2px;text-transform:uppercase;letter-spacing:.3px}
+  .open-verif-card{background:linear-gradient(135deg,#eff6ff,#eef2ff);border:1px solid #bfdbfe;border-radius:12px;padding:20px;margin-bottom:20px}
+  .open-verif-card h2{font-size:17px;font-weight:600;margin-bottom:12px;color:var(--blue)}
+</style>
+</head>
+<body>
+<div class="container">
+  <h1>Decline Fee Simulator</h1>
+  <p class="subtitle">Spendbase — моделювання комісій за деклайни для media buyers</p>
+
+  <div class="tabs">
+    <button class="tab-btn active" onclick="switchTab('sim')">Симуляція</button>
+    <button class="tab-btn" onclick="switchTab('client')">Моделяція клієнта</button>
+  </div>
+
+  <!-- ==================== TAB 1: SIMULATION ==================== -->
+  <div id="tab-sim" class="tab-content active">
+    <div class="two-cols">
+      <div class="card">
+        <h2>Поведінка клієнта</h2>
+        <div class="form-grid">
+          <div class="form-group">
+            <label>Старт<span class="info-tip">i<span class="tip-text">Дата початку симуляції. Всі результати будуть прив'язані до реальних дат.</span></span></label>
+            <input type="date" id="startDate" value="2026-01-20">
+          </div>
+          <div class="form-group">
+            <label>Період (днів)</label>
+            <input type="number" id="simDays" min="7" max="365" value="100">
+          </div>
+          <div class="form-group">
+            <label>Мерчант</label>
+            <select id="merchant"><option value="Google" selected>Google</option><option value="Google Ads">Google Ads</option><option value="Facebook">Facebook</option><option value="TikTok">TikTok</option><option value="LinkedIn">LinkedIn</option><option value="Other">Other</option></select>
+          </div>
+          <div class="form-group">
+            <label>Початковий баланс ($)<span class="info-tip">i<span class="tip-text">Баланс на старті. Коли закінчиться — всі auth деклайняться.</span></span></label>
+            <input type="number" id="startBalance" value="500" min="0" step="100">
+          </div>
+        </div>
+        <div class="section-divider"></div>
+        <div class="form-group" style="margin-bottom:14px">
+          <label>Верифікації/день<span class="info-tip">i<span class="tip-text">Скільки нових прив'язок карт до кампейнів на день. Кожна верифікація = auth на $0/$1 (завжди успішна, розбавляє DR). Одна картка може мати кілька верифікацій (різні кампейни). Через N днів верифікація стає "активною" і починає генерувати charge auth.</span></span></label>
+          <div style="display:flex;align-items:center;gap:12px">
+            <input type="range" id="baseVerify" min="0" max="500" value="50" style="flex:1" oninput="$('vVal').textContent=this.value">
+            <span id="vVal" style="font-size:14px;font-weight:600;min-width:28px;text-align:right">50</span>
+            <label style="display:flex;align-items:center;gap:4px;font-size:12px;cursor:pointer;white-space:nowrap;color:var(--muted)">
+              <input type="checkbox" id="randomVerify" checked style="accent-color:var(--accent)"> Рандом
+            </label>
+          </div>
+        </div>
+        <div class="form-group" style="margin-bottom:14px">
+          <label>Середня сума транзакції ($)<span class="info-tip">i<span class="tip-text">Діапазон суми одного charge auth. Кожен день — випадкова з діапазону.</span></span></label>
+          <div class="dual-range">
+            <div class="dual-range-track"></div><div class="dual-range-fill" id="txnFill"></div>
+            <input type="range" id="avgTxnMin" min="1" max="50" value="3" step="1" oninput="updDR('txn')">
+            <input type="range" id="avgTxnMax" min="1" max="50" value="20" step="1" oninput="updDR('txn')">
+          </div>
+          <div class="dual-range-values"><span id="txnMinL">$3</span><span id="txnMaxL">$20</span></div>
+        </div>
+        <div class="form-group" style="margin-bottom:14px">
+          <label>Затримка верифікація → перший charge (днів)<span class="info-tip">i<span class="tip-text">Через скільки днів після верифікації почнуть генеруватися charge auth по цій прив'язці. Рандомно з діапазону для кожної верифікації.</span></span></label>
+          <div class="dual-range">
+            <div class="dual-range-track"></div><div class="dual-range-fill" id="delayFill"></div>
+            <input type="range" id="delayMin" min="0" max="30" value="3" step="1" oninput="updDR('delay')">
+            <input type="range" id="delayMax" min="0" max="30" value="7" step="1" oninput="updDR('delay')">
+          </div>
+          <div class="dual-range-values"><span id="delayMinL">3 дн</span><span id="delayMaxL">7 дн</span></div>
+        </div>
+        <div class="form-grid">
+          <div class="form-group">
+            <label>Retries/невдалу auth<span class="info-tip">i<span class="tip-text">Скільки разів платформа повторює після fail. Ретраї розподіляються по днях за реальним патерном Google: ~45% в день 0, ~30% в день+1, ~15% в день+2, ~10% в день+3. 40% послідовностей відновлюються.</span></span></label>
+            <input type="number" id="retries" value="5" min="0" max="20">
+          </div>
+          <div class="form-group">
+            <label>% карток що списують/день<span class="info-tip">i<span class="tip-text">Не всі картки списують кожен день. Google Ads зазвичай списує раз на кілька днів. 10-15% = реалістично для media buying.</span></span></label>
+            <input type="number" id="chargeRate" value="12" min="1" max="100" step="1">
+          </div>
+          <div class="form-group">
+            <label>Recovery rate %<span class="info-tip">i<span class="tip-text">Відсоток retry-послідовностей, де останній retry успішний (баланс поповнився). За реальними даними Google ~40%.</span></span></label>
+            <input type="number" id="recoveryRate" value="40" min="0" max="100" step="1">
+          </div>
+        </div>
+      </div>
+
+      <div class="card" id="feeCard">
+        <h2>Тарифікація (Fee Rules)</h2>
+        <div class="form-grid">
+          <div class="form-group">
+            <label>Grace period (днів)<span class="info-tip">i<span class="tip-text">Перші дні після старту — DR трекається, але fee = $0.</span></span></label>
+            <input type="number" id="graceDays" value="7" min="0" max="90">
+          </div>
+          <div class="form-group">
+            <label>DR window (днів)<span class="info-tip">i<span class="tip-text">Rolling window для розрахунку DR. Стандарт 7 днів.</span></span></label>
+            <input type="number" id="drWindow" value="7" min="1" max="30">
+          </div>
+          <div class="form-group">
+            <label>Suspend threshold %<span class="info-tip">i<span class="tip-text">DR при якому блокування. Блок = стоп нових верифікацій (картки далі працюють). Якщо DR знизиться — автоматичне розблокування.</span></span></label>
+            <input type="number" id="suspendPct" value="25" min="1" max="100">
+          </div>
+          <div class="form-group" style="grid-column:1/-1">
+            <label style="display:flex;align-items:center;gap:8px;cursor:pointer">
+              <input type="checkbox" id="blockEnabled" checked style="accent-color:var(--accent);width:18px;height:18px">
+              Блокування акаунту<span class="info-tip">i<span class="tip-text">Увімкнено: при DR ≥ threshold — стоп верифікацій + post-block fee. Картки далі працюють, при зниженні DR — розблокування. Вимкнено: блокування не відбувається, fee за тірами незалежно від DR.</span></span>
+            </label>
+          </div>
+          <div class="form-group">
+            <label>Fee 5-10% DR</label>
+            <input type="number" id="fee1" value="0.15" step="0.01" min="0">
+          </div>
+          <div class="form-group">
+            <label>Fee 10-15% DR</label>
+            <input type="number" id="fee2" value="0.25" step="0.01" min="0">
+          </div>
+          <div class="form-group">
+            <label>Fee 15-25% DR</label>
+            <input type="number" id="fee3" value="0.75" step="0.01" min="0">
+          </div>
+          <div class="form-group">
+            <label>Post-block fee</label>
+            <input type="number" id="feeBlock" value="0.10" step="0.01" min="0">
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>Події</h2>
+      <p style="font-size:13px;color:var(--muted);margin-bottom:4px">Івенти змінюють поведінку під час симуляції. Можна вказати день або дату.</p>
+      <div id="eventsList" class="events-list"></div>
+      <div class="add-event-form">
+        <div class="form-group" style="min-width:80px">
+          <label>Коли</label>
+          <select id="evWhenMode" onchange="toggleEvWhen()" style="padding:9px 8px;font-size:13px">
+            <option value="day">День #</option>
+            <option value="date">Дата</option>
+          </select>
+        </div>
+        <div class="form-group" id="evDayGroup" style="min-width:70px"><label>День</label><input type="number" id="evDay" value="10" min="1" max="365"></div>
+        <div class="form-group hidden" id="evDateGroup" style="min-width:130px"><label>Дата</label><input type="date" id="evDate"></div>
+        <div class="form-group" style="min-width:170px">
+          <label>Тип</label>
+          <select id="evType" onchange="updEvUI()">
+            <option value="topup">💰 Поповнення</option>
+            <option value="set_verif">🔵 Змінити verif/день</option>
+            <option value="pause_verif">⏸ Стоп верифікації</option>
+            <option value="resume_verif">▶ Старт верифікації</option>
+            <option value="custom">✏️ Кастом день</option>
+          </select>
+        </div>
+        <div class="form-group" id="evG1" style="min-width:100px"><label id="evL1">Сума ($)</label><input type="number" id="evP1" value="3000" min="0"></div>
+        <div class="form-group hidden" id="evG2" style="min-width:100px"><label id="evL2">Declined</label><input type="number" id="evP2" value="50" min="0"></div>
+        <div class="form-group hidden" id="evG3" style="min-width:80px"><label id="evL3">Verif</label><input type="number" id="evP3" value="0" min="0"></div>
+        <div class="form-group hidden" id="evRepeatGroup" style="min-width:200px">
+          <label style="display:flex;align-items:center;gap:6px;cursor:pointer">
+            <input type="checkbox" id="evRepeat" style="accent-color:var(--accent)" onchange="$('evRepeatOpts').classList.toggle('hidden',!this.checked)"> Повторити
+          </label>
+          <div id="evRepeatOpts" class="hidden" style="display:flex;gap:8px;margin-top:4px;align-items:center">
+            <span style="font-size:12px;color:var(--muted)">кожні</span>
+            <input type="number" id="evRepeatN" value="7" min="1" max="90" style="width:50px;padding:5px 8px;font-size:13px">
+            <span style="font-size:12px;color:var(--muted)">днів, до дня</span>
+            <input type="number" id="evRepeatEnd" value="90" min="1" max="365" style="width:60px;padding:5px 8px;font-size:13px">
+          </div>
+        </div>
+        <button class="btn btn-primary btn-small" onclick="addEvent()">Додати</button>
+      </div>
+    </div>
+
+    <div style="display:flex;gap:12px;margin-bottom:20px;flex-wrap:wrap;align-items:center">
+      <button class="btn btn-primary" onclick="runSim()" style="font-size:16px;padding:14px 32px">Запустити симуляцію</button>
+      <button class="btn btn-secondary" onclick="resetSim()">Скинути результати</button>
+      <div style="border-left:1px solid var(--border);height:32px;margin:0 4px"></div>
+      <button class="btn btn-secondary btn-small" onclick="downloadTemplate()" title="JSON-шаблон з інструкціями для AI">📥 Template for AI</button>
+      <button class="btn btn-secondary btn-small" onclick="$('importFile').click()" title="Імпорт заповненого JSON від AI">📤 Import JSON</button>
+      <input type="file" id="importFile" accept=".json" style="display:none" onchange="importJSON(this)">
+    </div>
+  </div>
+
+  <!-- ==================== TAB 2: CLIENT MODELING ==================== -->
+  <div id="tab-client" class="tab-content">
+    <div class="two-cols">
+      <div class="card">
+        <h2>Завантаження даних клієнта</h2>
+        <p style="font-size:13px;color:var(--muted);margin-bottom:12px">Завантажте CSV з дашборду. Система автоматично розпарсить дані та побудує симуляцію з реальними числами клієнта.</p>
+        <button class="btn btn-secondary btn-small" onclick="autofillBMG()" style="margin-bottom:16px;border-color:var(--accent);color:var(--accent)">⚡ Autofill BMG</button>
+        <span id="bmgStatus" style="font-size:12px;color:var(--muted);margin-left:8px"></span>
+
+        <div style="margin-bottom:16px">
+          <label style="font-size:13px;color:var(--muted);font-weight:600;margin-bottom:8px;display:block">Transaction Classification CSV <span style="color:var(--red)">*</span></label>
+          <div class="upload-zone" id="uz1" onclick="$('file1').click()" ondragover="event.preventDefault();this.classList.add('dragover')" ondragleave="this.classList.remove('dragover')" ondrop="event.preventDefault();this.classList.remove('dragover');handleFile(event.dataTransfer.files[0],'txn')">
+            <div class="icon">📊</div>
+            <div class="label">Перетягни CSV або натисни для вибору</div>
+            <div class="filename" id="fn1"></div>
+            <input type="file" id="file1" accept=".csv" style="display:none" onchange="handleFile(this.files[0],'txn')">
+          </div>
+        </div>
+
+        <div style="margin-bottom:16px">
+          <label style="font-size:13px;color:var(--muted);font-weight:600;margin-bottom:8px;display:block">Cards by Status CSV <span style="color:var(--muted)">(опціонально)</span></label>
+          <div class="upload-zone" id="uz2" onclick="$('file2').click()" ondragover="event.preventDefault();this.classList.add('dragover')" ondragleave="this.classList.remove('dragover')" ondrop="event.preventDefault();this.classList.remove('dragover');handleFile(event.dataTransfer.files[0],'cards')">
+            <div class="icon">💳</div>
+            <div class="label">Перетягни CSV або натисни для вибору</div>
+            <div class="filename" id="fn2"></div>
+            <input type="file" id="file2" accept=".csv" style="display:none" onchange="handleFile(this.files[0],'cards')">
+          </div>
+        </div>
+
+        <div style="margin-bottom:16px">
+          <label style="font-size:13px;color:var(--muted);font-weight:600;margin-bottom:8px;display:block">Поповнення балансу CSV <span style="color:var(--muted)">(опціонально)</span></label>
+          <div class="upload-zone" id="uz3" onclick="$('file3').click()" ondragover="event.preventDefault();this.classList.add('dragover')" ondragleave="this.classList.remove('dragover')" ondrop="event.preventDefault();this.classList.remove('dragover');handleFile(event.dataTransfer.files[0],'topups')">
+            <div class="icon">💰</div>
+            <div class="label">CSV з датами та сумами поповнень</div>
+            <div class="filename" id="fn3"></div>
+            <input type="file" id="file3" accept=".csv" style="display:none" onchange="handleFile(this.files[0],'topups')">
+          </div>
+        </div>
+
+        <div style="margin-bottom:16px">
+          <label style="font-size:13px;color:var(--muted);font-weight:600;margin-bottom:8px;display:block">Retry Sequences CSV <span style="color:var(--muted)">(опціонально)</span><span class="info-tip">i<span class="tip-text">CSV з retry-послідовностями. Дозволяє точно порахувати Retry Tax: скільки деклайнів від ретраїв vs оригінальних, справжній DR без ретраїв, вартість недобалансу.</span></span></label>
+          <div class="upload-zone" id="uz4" onclick="$('file4').click()" ondragover="event.preventDefault();this.classList.add('dragover')" ondragleave="this.classList.remove('dragover')" ondrop="event.preventDefault();this.classList.remove('dragover');handleFile(event.dataTransfer.files[0],'retry')">
+            <div class="icon">🔄</div>
+            <div class="label">CSV з retry-послідовностями (Recurring Retry Sequences)</div>
+            <div class="filename" id="fn4"></div>
+            <input type="file" id="file4" accept=".csv" style="display:none" onchange="handleFile(this.files[0],'retry')">
+          </div>
+        </div>
+
+        <div class="section-divider"></div>
+        <div class="form-grid" style="margin-bottom:12px">
+          <div class="form-group">
+            <label>Середня сума транзакції ($)<span class="info-tip">i<span class="tip-text">Автозаповнення: загальна сума top-ups / кількість успішних charges. Можна змінити вручну.</span></span></label>
+            <input type="number" id="c_avgTxn" value="11.50" min="0.01" step="0.5">
+          </div>
+          <div class="form-group">
+            <label>Курс EUR → USD<span class="info-tip">i<span class="tip-text">Якщо поповнення в EUR, вони будуть конвертовані в USD за цим курсом.</span></span></label>
+            <input type="number" id="c_eurUsd" value="1.06" min="0.01" step="0.01" onchange="autoFillFields()">
+          </div>
+          <div class="form-group">
+            <label>Початковий баланс ($)<span class="info-tip">i<span class="tip-text">Баланс клієнта на момент першого дня в CSV. Автозаповнення: сума top-ups до першого дня Transaction CSV.</span></span></label>
+            <input type="number" id="c_startBal" value="0" min="0" step="100">
+          </div>
+          <div class="form-group">
+            <label>Затримка верифікація → charge (днів)<span class="info-tip">i<span class="tip-text">Для розрахунку "відкритих верифікацій". Скільки днів в середньому від верифікації до першого charge.</span></span></label>
+            <input type="number" id="c_verifDelay" value="5" min="0" max="30">
+          </div>
+        </div>
+
+        <div id="parsedInfo" class="hidden" style="margin-top:20px">
+          <div class="section-divider"></div>
+          <h3 style="font-size:14px;font-weight:600;margin-bottom:8px">Розпарсені дані</h3>
+          <div class="parsed-stats" id="parsedStats"></div>
+        </div>
+      </div>
+
+      <div class="card">
+        <h2>Тарифікація (Fee Rules)</h2>
+        <p style="font-size:13px;color:var(--muted);margin-bottom:12px">Змінюй тарифи та перезапускай — дані клієнта лишаться.</p>
+        <div class="form-grid">
+          <div class="form-group">
+            <label>Grace period (днів)</label>
+            <input type="number" id="c_graceDays" value="7" min="0" max="90">
+          </div>
+          <div class="form-group">
+            <label>DR window (днів)</label>
+            <input type="number" id="c_drWindow" value="7" min="1" max="30">
+          </div>
+          <div class="form-group">
+            <label>Suspend threshold %</label>
+            <input type="number" id="c_suspendPct" value="25" min="1" max="100">
+          </div>
+          <div class="form-group" style="grid-column:1/-1">
+            <label style="display:flex;align-items:center;gap:8px;cursor:pointer">
+              <input type="checkbox" id="c_blockEnabled" checked style="accent-color:var(--accent);width:18px;height:18px">
+              Блокування акаунту
+            </label>
+          </div>
+          <div class="form-group">
+            <label>Fee 5-10% DR</label>
+            <input type="number" id="c_fee1" value="0.15" step="0.01" min="0">
+          </div>
+          <div class="form-group">
+            <label>Fee 10-15% DR</label>
+            <input type="number" id="c_fee2" value="0.25" step="0.01" min="0">
+          </div>
+          <div class="form-group">
+            <label>Fee 15-25% DR</label>
+            <input type="number" id="c_fee3" value="0.75" step="0.01" min="0">
+          </div>
+          <div class="form-group">
+            <label>Post-block fee</label>
+            <input type="number" id="c_feeBlock" value="0.10" step="0.01" min="0">
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div style="display:flex;gap:12px;margin-bottom:20px">
+      <button class="btn btn-primary" onclick="runClientSim()" style="font-size:16px;padding:14px 32px" id="btnClientRun" disabled>Аналізувати та симулювати</button>
+      <button class="btn btn-secondary" onclick="resetClient()">Скинути</button>
+    </div>
+  </div>
+
+  <!-- ==================== SHARED RESULTS ==================== -->
+  <div id="results" class="hidden">
+    <div class="card"><h2>Підсумок</h2><div class="summary-grid" id="summaryGrid"></div></div>
+
+    <!-- Retry Tax Panel -->
+    <div id="retryTaxPanel" class="retry-tax-card hidden">
+      <h2>🔄 Retry Tax — вартість ретраїв</h2>
+      <div class="retry-tax-grid" id="retryTaxGrid"></div>
+    </div>
+
+    <!-- Open Verifications Panel -->
+    <div id="openVerifPanel" class="open-verif-card hidden">
+      <h2>🔓 Відкриті верифікації</h2>
+      <div class="retry-tax-grid" id="openVerifGrid"></div>
+    </div>
+
+    <div class="card"><h2>Графік DR <span id="chartMode" style="font-size:12px;color:var(--muted);font-weight:400"></span></h2><div class="chart-container"><canvas id="drChart"></canvas></div></div>
+    <div class="card">
+      <h2>Прогрес-бар <span id="pbLabel" style="font-size:14px;color:var(--muted);font-weight:400"></span></h2>
+      <div class="progress-bar-wrapper"><div class="progress-bar-zones"><div class="progress-zone pz-green" id="zG"></div><div class="progress-zone pz-yellow" id="zY"></div><div class="progress-zone pz-orange" id="zO"></div><div class="progress-zone pz-red" id="zR"></div></div><div class="progress-fill" id="pFill"></div><div class="progress-dr-label" id="pDR">0%</div></div>
+      <div class="progress-markers"><span class="progress-marker" style="left:0%">0%</span><span class="progress-marker" id="m5">5%</span><span class="progress-marker" id="m10">10%</span><span class="progress-marker" id="m15">15%</span><span class="progress-marker" id="m25">25%</span></div>
+      <div class="progress-status" id="pStatus"></div>
+    </div>
+    <div class="card">
+      <h2>Деталізація</h2>
+      <div class="legend-toggle" onclick="this.nextElementSibling.classList.toggle('hidden');this.querySelector('.arrow').textContent=this.nextElementSibling.classList.contains('hidden')?'▶':'▼'"><span class="arrow">▶</span> Легенда колонок</div>
+      <div class="legend-grid hidden">
+        <div class="legend-item"><b>Дата</b><span>Календарна дата дня</span></div>
+        <div class="legend-item"><b>День</b><span>Порядковий номер від старту</span></div>
+        <div class="legend-item"><b>Актив.</b><span>Картки після верифікації + затримки, готові до charge</span></div>
+        <div class="legend-item"><b>Auth</b><span>Успішні charge-авторизації (без верифікацій і ретраїв)</span></div>
+        <div class="legend-item"><b>Verif</b><span>Нові верифікації (прив'язка карт до кампейнів). Auth $0, розбавляє DR</span></div>
+        <div class="legend-item"><b>Очік.</b><span>Верифікації без жодного charge — чекають на затримку до першої авторизації</span></div>
+        <div class="legend-item"><b>Orig.D</b><span>Оригінальні деклайни — перші невдалі спроби (без ретраїв)</span></div>
+        <div class="legend-item"><b>Retry.D</b><span>Повторні спроби мерчанта, які не пройшли</span></div>
+        <div class="legend-item"><b>Retry.R</b><span>Повторні спроби, які пройшли (recovery)</span></div>
+        <div class="legend-item"><b>Spend</b><span>Витрати = успішні charges × avg суму транзакції</span></div>
+        <div class="legend-item"><b id="legDrLabel">7d DR</b><span id="legDrDesc">Observed DR — rolling 7-day window, включає ретраї</span></div>
+        <div class="legend-item"><b>True DR</b><span>DR без ретраїв = origDecl / (auth + verif)</span></div>
+        <div class="legend-item"><b id="legTierDesc">Tier</b><span>Тарифний тір за поточним DR. Визначає fee за кожен decline</span></div>
+        <div class="legend-item"><b>Fee/d</b><span>Ставка за один decline в поточному тірі</span></div>
+        <div class="legend-item"><b>Fee</b><span>Комісія за день = всі declines × fee rate</span></div>
+        <div class="legend-item"><b>Σ Fee</b><span>Кумулятивна сума всіх fees</span></div>
+        <div class="legend-item"><b>Баланс</b><span>Залишок на рахунку. 0 = всі charges деклайняться</span></div>
+        <div class="legend-item"><b>Статус</b><span>Grace / Active / Blocked / 💰 поповнення</span></div>
+      </div>
+      <div style="display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap">
+        <button class="btn btn-secondary btn-small" onclick="exportMD()" title="Markdown-звіт для обговорення з AI">📄 Export MD Report</button>
+        <button class="btn btn-secondary btn-small" onclick="exportCSV()" title="CSV таблиця з деталізацією">📊 Export CSV</button>
+      </div>
+      <div class="results-table-wrapper" style="max-height:600px;overflow-y:auto">
+        <table><thead><tr>
+          <th title="Календарна дата дня симуляції">Дата</th>
+          <th title="Порядковий номер дня від старту симуляції">День</th>
+          <th title="Активні картки — пройшли верифікацію + затримку, можуть генерувати charge">Актив.</th>
+          <th title="Успішні charge-авторизації (оплати). Не включає верифікації та ретраї">Auth</th>
+          <th title="Верифікації за день — прив'язка карт до кампейнів. Auth $0, завжди OK, розбавляє DR">Verif</th>
+          <th title="Відкриті верифікації — верифікації, по яких ще не було жодної спроби charge">Очік.</th>
+          <th title="Оригінальні деклайни — перші невдалі спроби списання (без ретраїв)">Orig.D</th>
+          <th title="Retry-деклайни — повторні спроби мерчанта, які не пройшли. Кожен = окремий decline в DR">Retry.D</th>
+          <th title="Retry-recoveries — повторні спроби, які успішно пройшли (баланс поповнився)">Retry.R</th>
+          <th title="Витрати за день = успішні charges × середня сума транзакції">Spend</th>
+          <th id="thDR" title="Observed DR — rolling 7d window. Всі деклайни (orig + retry) / всі авторизації">7d DR</th>
+          <th title="True DR — без ретраїв. origDecl / (auth + verif). Справжній DR без retry-amplification">True DR</th>
+          <th id="thTier" title="Тарифний тір на основі поточного DR. Визначає fee за кожен decline">Tier</th>
+          <th title="Ставка fee за один decline в поточному тірі">Fee/d</th>
+          <th title="Комісія за день = всі declines × fee rate тіру">Fee</th>
+          <th title="Кумулятивна комісія — сума всіх fees з початку симуляції">Σ Fee</th>
+          <th title="Баланс рахунку. Зменшується від charges, збільшується від поповнень. 0 = всі charges деклайняться">Баланс</th>
+          <th title="Grace = без fee. Active = норма. Blocked = стоп верифікацій. 💰 = поповнення">Статус</th>
+        </tr></thead><tbody id="resBody"></tbody></table>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+const $=id=>document.getElementById(id);
+let events=[],simData=[],clientParsed=null,cardsParsed=null,topupsParsed=null,retryParsed=null,retryDayMap=null,currentSusPct=25;
+
+// ===== TAB SWITCHING =====
+function switchTab(tab){
+  document.querySelectorAll('.tab-btn').forEach((b,i)=>b.classList.toggle('active',i===(tab==='sim'?0:1)));
+  $('tab-sim').classList.toggle('active',tab==='sim');
+  $('tab-client').classList.toggle('active',tab==='client');
+  $('results').classList.add('hidden');
+}
+
+// ===== DUAL RANGE =====
+function updDR(type){
+  const cfg=type==='txn'
+    ?{min:$('avgTxnMin'),max:$('avgTxnMax'),fill:$('txnFill'),lMin:$('txnMinL'),lMax:$('txnMaxL'),pre:'$',suf:''}
+    :{min:$('delayMin'),max:$('delayMax'),fill:$('delayFill'),lMin:$('delayMinL'),lMax:$('delayMaxL'),pre:'',suf:' дн'};
+  let lo=+cfg.min.value,hi=+cfg.max.value;
+  if(lo>hi){cfg.min.value=hi;lo=hi;}if(hi<lo){cfg.max.value=lo;hi=lo;}
+  const rMin=+cfg.min.min,rMax=+cfg.min.max,pL=((lo-rMin)/(rMax-rMin))*100,pR=((hi-rMin)/(rMax-rMin))*100;
+  cfg.fill.style.left=pL+'%';cfg.fill.style.width=(pR-pL)+'%';
+  cfg.lMin.textContent=cfg.pre+lo+cfg.suf;cfg.lMax.textContent=cfg.pre+hi+cfg.suf;
+}
+updDR('txn');updDR('delay');
+
+// ===== EVENTS (TAB 1) =====
+function toggleEvWhen(){
+  const mode=$('evWhenMode').value;
+  $('evDayGroup').classList.toggle('hidden',mode==='date');
+  $('evDateGroup').classList.toggle('hidden',mode==='day');
+  if(mode==='date'){
+    // Pre-fill date from current day value
+    const sd=new Date($('startDate').value);
+    sd.setDate(sd.getDate()+(+$('evDay').value)-1);
+    $('evDate').value=sd.toISOString().split('T')[0];
+  }
+}
+
+function getEvDay(){
+  const mode=$('evWhenMode').value;
+  if(mode==='day') return +$('evDay').value;
+  // Convert date to day number
+  const sd=new Date($('startDate').value+'T00:00:00');
+  const ed=new Date($('evDate').value+'T00:00:00');
+  const diff=Math.round((ed-sd)/(86400000))+1;
+  return diff;
+}
+
+function validateEvDay(day){
+  const maxDays=+$('simDays').value;
+  if(day<1||day>maxDays){
+    const sd=new Date($('startDate').value);
+    const end=new Date(sd);end.setDate(end.getDate()+maxDays-1);
+    alert(`Подія має бути в межах симуляції: день 1-${maxDays} (${$('startDate').value} — ${end.toISOString().split('T')[0]})`);
+    return false;
+  }
+  return true;
+}
+
+function updEvUI(){
+  const t=$('evType').value;
+  $('evG1').classList.remove('hidden');$('evG2').classList.add('hidden');$('evG3').classList.add('hidden');
+  $('evRepeatGroup').classList.add('hidden');
+  if(t==='topup'){$('evL1').textContent='Сума ($)';$('evP1').value=3000;$('evRepeatGroup').classList.remove('hidden');}
+  else if(t==='set_verif'){$('evL1').textContent='Нова кількість/день';$('evP1').value=0;}
+  else if(t==='pause_verif'){$('evG1').classList.add('hidden');}
+  else if(t==='resume_verif'){$('evG1').classList.add('hidden');}
+  else if(t==='custom'){$('evL1').textContent='Auth (ok)';$('evP1').value=100;$('evG2').classList.remove('hidden');$('evL2').textContent='Declined';$('evP2').value=50;$('evG3').classList.remove('hidden');$('evL3').textContent='Verif';$('evP3').value=0;}
+}
+updEvUI();
+
+function addEvent(){
+  const day=getEvDay(),type=$('evType').value,p1=+$('evP1').value,p2=+$('evP2').value,p3=+$('evP3').value;
+  if(!validateEvDay(day))return;
+
+  // For resume_verif: use base verify rate from setup
+  const actualP1=type==='resume_verif'?+$('baseVerify').value:p1;
+
+  // Handle repeat for topup
+  if(type==='topup'&&$('evRepeat').checked){
+    const every=+$('evRepeatN').value||7;
+    const endDay=+$('evRepeatEnd').value||+$('simDays').value;
+    const maxDays=+$('simDays').value;
+    let count=0;
+    for(let d=day;d<=Math.min(endDay,maxDays);d+=every){
+      events.push({day:d,type,p1,p2:0,p3:0,desc:`Поповнення $${p1}`,cls:'et-topup'});
+      count++;
+    }
+    events.sort((a,b)=>a.day-b.day);renderEv();
+    return;
+  }
+
+  let desc='',cls='';
+  if(type==='topup'){desc=`Поповнення $${actualP1}`;cls='et-topup';}
+  else if(type==='set_verif'){desc=`Verif/день → ${actualP1}`;cls='et-verif';}
+  else if(type==='pause_verif'){desc='⏸ Стоп верифікацій';cls='et-pause';}
+  else if(type==='resume_verif'){desc=`▶ Старт верифікацій (${actualP1}/день)`;cls='et-verif';}
+  else if(type==='custom'){desc=`Кастом: ${actualP1} auth ok, ${p2} declined, ${p3} verif`;cls='et-custom';}
+  events.push({day,type,p1:actualP1,p2,p3,desc,cls});events.sort((a,b)=>a.day-b.day);renderEv();
+}
+function removeEv(i){events.splice(i,1);renderEv();}
+function renderEv(){
+  const el=$('eventsList');
+  if(!events.length){el.innerHTML='<p style="font-size:13px;color:var(--muted);font-style:italic">Немає подій. Додай поповнення балансу, зміни верифікацій тощо.</p>';return;}
+  el.innerHTML=events.map((e,i)=>{
+    const sd=new Date($('startDate').value);sd.setDate(sd.getDate()+e.day-1);
+    const ds=sd.toISOString().split('T')[0];
+    return`<div class="event-item ${e.cls}"><span class="day-badge">День ${e.day} (${ds})</span><span class="event-desc">${e.desc}</span><span class="event-remove" onclick="removeEv(${i})">✕</span></div>`;
+  }).join('');
+}
+renderEv();
+
+function fmt(n){return n.toLocaleString('uk-UA');}
+function fmtDate(d){return d.toISOString().split('T')[0];}
+
+// ===== CSV PARSING =====
+function parseCSV(text){
+  const lines=text.trim().split('\n');
+  const headers=lines[0].split(',').map(h=>h.replace(/"/g,'').trim());
+  const rows=[];
+  for(let i=1;i<lines.length;i++){
+    const vals=[];let cur='',inQ=false;
+    for(let c=0;c<lines[i].length;c++){
+      const ch=lines[i][c];
+      if(ch==='"'){inQ=!inQ;}
+      else if(ch===','&&!inQ){vals.push(cur.trim());cur='';}
+      else{cur+=ch;}
+    }
+    vals.push(cur.trim());
+    const row={};
+    headers.forEach((h,j)=>row[h]=vals[j]||'');
+    rows.push(row);
+  }
+  return{headers,rows};
+}
+
+function handleFile(file,type){
+  if(!file)return;
+  const reader=new FileReader();
+  reader.onload=function(e){
+    const text=e.target.result;
+    if(type==='txn'){
+      clientParsed=parseTxnCSV(text);
+      $('fn1').textContent=file.name;
+      $('uz1').classList.add('has-file');
+      showParsedInfo();autoFillFields();
+      $('btnClientRun').disabled=false;
+    } else if(type==='cards'){
+      cardsParsed=parseCardsCSV(text);
+      $('fn2').textContent=file.name;
+      $('uz2').classList.add('has-file');
+      showParsedInfo();
+    } else if(type==='topups'){
+      topupsParsed=parseTopupsCSV(text);
+      $('fn3').textContent=file.name+` (${topupsParsed.length} поповнень)`;
+      $('uz3').classList.add('has-file');
+      showParsedInfo();autoFillFields();
+    } else if(type==='retry'){
+      retryParsed=parseRetryCSV(text);
+      retryDayMap=buildRetryDayMap(retryParsed);
+      $('fn4').textContent=file.name+` (${retryParsed.total} послідовностей)`;
+      $('uz4').classList.add('has-file');
+      showParsedInfo();
+    }
+  };
+  reader.readAsText(file);
+}
+
+function parseTxnCSV(text){
+  const{headers,rows}=parseCSV(text);
+  const days=[];
+  for(const row of rows){
+    const dateStr=row['Period']||row['time']||'';
+    if(!dateStr)continue;
+    const date=new Date(dateStr.split(' ')[0]+'T00:00:00');
+    const manual=+(row['Manual Transaction']||0);
+    const manualF=+(row['Manual Transaction (Failed)']||0);
+    const recur=+(row['Recurring Charge']||0);
+    const recurF=+(row['Recurring Charge (Failed)']||0);
+    const refund=+(row['Refund']||0);
+    const refundF=+(row['Refund (Failed)']||0);
+    const verif=+(row['Verification']||0);
+    const verifF=+(row['Verification (Failed)']||0);
+    const preAuth=+(row['Pre-authorisation']||0);
+    const preAuthF=+(row['Pre-authorisation (Failed)']||0);
+    const rev=+(row['Reversal']||0);
+    const revF=+(row['Reversal (Failed)']||0);
+    const other=+(row['Other']||0);
+    const otherF=+(row['Other (Failed)']||0);
+    const authOK=manual+recur+refund+verif+preAuth+rev+other;
+    const authFailed=manualF+recurF+refundF+verifF+preAuthF+revF+otherF;
+    const totalAuth=authOK+authFailed;
+    const totalDecl=authFailed;
+    days.push({
+      date,dateStr:fmtDate(date),
+      authOK,authFailed,totalAuth,totalDecl,
+      verif,verifF,
+      manual,manualF,recur,recurF,preAuth,preAuthF,
+      hasActivity:totalAuth>0
+    });
+  }
+  days.sort((a,b)=>a.date-b.date);
+  return days;
+}
+
+function parseCardsCSV(text){
+  const{headers,rows}=parseCSV(text);
+  const days={};
+  for(const row of rows){
+    const dateStr=row['time']||row['Period']||'';
+    if(!dateStr)continue;
+    const ds=dateStr.split(' ')[0];
+    days[ds]={active:+(row['Active']||0),deactivated:+(row['Deactivated']||0),total:+(row['Total']||0)};
+  }
+  return days;
+}
+
+function parseDollarValue(str){
+  if(!str)return 0;
+  let s=str.replace(/[$€£,\s]/g,'').trim();
+  let mult=1;
+  if(/K$/i.test(s)){mult=1000;s=s.replace(/K$/i,'');}
+  else if(/M$/i.test(s)){mult=1000000;s=s.replace(/M$/i,'');}
+  const v=parseFloat(s);
+  return isNaN(v)?0:v*mult;
+}
+
+function parseTopupsCSV(text){
+  const{headers,rows}=parseCSV(text);
+  const topups=[];
+  const dateCol=headers.find(h=>/date|period|time|calculated|дата/i.test(h))||headers[0];
+  const loadCols=headers.filter(h=>/load/i.test(h));
+  if(loadCols.length>0){
+    for(const row of rows){
+      const dateStr=row[dateCol]||'';
+      if(!dateStr)continue;
+      const ds=dateStr.split(' ')[0].split('T')[0];
+      for(const col of loadCols){
+        const amt=parseDollarValue(row[col]);
+        if(amt<=0)continue;
+        const isEUR=/eur/i.test(col);
+        let currency='USD';
+        if(isEUR)currency='EUR';
+        else if(/gbp/i.test(col))currency='GBP';
+        else if(/pln/i.test(col))currency='PLN';
+        topups.push({date:ds,amount:amt,isEUR:currency==='EUR',currency});
+      }
+    }
+  } else {
+    let amtCol=headers.find(h=>/amount|sum|eur|usd|сума|value|total/i.test(h));
+    if(!amtCol){for(const h of headers){if(h===dateCol)continue;const sample=rows.find(r=>r[h]&&parseDollarValue(r[h])>0);if(sample){amtCol=h;break;}}}
+    if(!amtCol)amtCol=headers[1]||headers[0];
+    const isEUR=/eur|€/i.test(amtCol)||rows.some(r=>/€/.test(r[amtCol]||''));
+    for(const row of rows){
+      const dateStr=row[dateCol]||'';if(!dateStr)continue;
+      const ds=dateStr.split(' ')[0].split('T')[0];
+      const amt=parseDollarValue(row[amtCol]);
+      if(amt<=0)continue;
+      topups.push({date:ds,amount:amt,isEUR,currency:isEUR?'EUR':'USD'});
+    }
+  }
+  topups.sort((a,b)=>a.date.localeCompare(b.date));
+  return topups;
+}
+
+// ===== RETRY SEQUENCES CSV PARSING =====
+function parseRetryCSV(text){
+  const{headers,rows}=parseCSV(text);
+  const sequences=[];
+  for(const row of rows){
+    const card=row['Card']||'';
+    const merchant=row['Merchant']||'';
+    const amount=Math.abs(parseFloat((row['Amount']||'0').replace(/[$,]/g,'')));
+    const attempts=parseInt(row['Charge Attempts']||'0');
+    const outcome=row['Outcome']||'';
+    const firstFail=row['First Fail']||'';
+    const gapsStr=row['Gaps (h)']||'';
+    const gaps=gapsStr.split(',').map(g=>parseFloat(g.trim())).filter(g=>!isNaN(g));
+    sequences.push({card,merchant,amount,attempts,outcome,firstFail,gaps});
+  }
+  const total=sequences.length;
+  const recovered=sequences.filter(s=>s.outcome==='Recovered').length;
+  const failed=total-recovered;
+  const recoveryRate=total>0?recovered/total:0;
+  const avgAttempts=total>0?sequences.reduce((s,r)=>s+r.attempts,0)/total:0;
+  const totalExtraDeclines=sequences.reduce((s,r)=>s+Math.max(0,r.attempts-1),0);
+  // Retry declines = extra attempts minus recovered last attempts
+  const totalRetryDeclines=totalExtraDeclines-recovered;
+  const avgAmount=total>0?sequences.reduce((s,r)=>s+r.amount,0)/total:0;
+  // Day distribution
+  const dayDist=[0,0,0,0];
+  let totalRetryHits=0;
+  for(const seq of sequences){
+    let cumH=0;
+    for(const gap of seq.gaps){cumH+=gap;const d=Math.min(Math.floor(cumH/24),3);dayDist[d]++;totalRetryHits++;}
+  }
+  const daySpread=totalRetryHits>0?dayDist.map(d=>d/totalRetryHits):[0.45,0.30,0.15,0.10];
+  return{sequences,total,recovered,failed,recoveryRate,avgAttempts,totalExtraDeclines,totalRetryDeclines,avgAmount,daySpread};
+}
+
+// Build per-day map of retry declines/recoveries from retry CSV
+function buildRetryDayMap(rp){
+  if(!rp||!rp.sequences.length)return null;
+  const dayMap={};// dateStr -> {retryDecl, retryRecov, origDecl, sequences}
+  for(const seq of rp.sequences){
+    if(!seq.firstFail)continue;
+    const ffDate=new Date(seq.firstFail);
+    const firstDay=fmtDate(ffDate);
+    if(!dayMap[firstDay])dayMap[firstDay]={retryDecl:0,retryRecov:0,origDecl:0,seqCount:0};
+    dayMap[firstDay].origDecl++;
+    dayMap[firstDay].seqCount++;
+    let cumH=0;
+    for(let g=0;g<seq.gaps.length;g++){
+      cumH+=seq.gaps[g];
+      const attemptDate=new Date(ffDate.getTime()+cumH*3600000);
+      const attemptDay=fmtDate(attemptDate);
+      if(!dayMap[attemptDay])dayMap[attemptDay]={retryDecl:0,retryRecov:0,origDecl:0,seqCount:0};
+      if(g===seq.gaps.length-1&&seq.outcome==='Recovered'){
+        dayMap[attemptDay].retryRecov++;
+      } else {
+        dayMap[attemptDay].retryDecl++;
+      }
+    }
+  }
+  return dayMap;
+}
+
+function showParsedInfo(){
+  if(!clientParsed)return;
+  $('parsedInfo').classList.remove('hidden');
+  const d=clientParsed;
+  const activeDays=d.filter(x=>x.hasActivity);
+  const totalAuth=d.reduce((s,x)=>s+x.totalAuth,0);
+  const totalDecl=d.reduce((s,x)=>s+x.totalDecl,0);
+  const totalVerif=d.reduce((s,x)=>s+x.verif,0);
+  const ltDR=totalAuth>0?(totalDecl/totalAuth*100).toFixed(1)+'%':'0%';
+  const dateRange=d.length>0?`${d[0].dateStr} — ${d[d.length-1].dateStr}`:'—';
+  const maxCards=cardsParsed?Math.max(...Object.values(cardsParsed).map(c=>c.active)):'—';
+  const topupCount=topupsParsed?topupsParsed.length:0;
+  const topupTotal=topupsParsed?topupsParsed.reduce((s,t)=>s+t.amount,0):0;
+  const topupCurrency=topupsParsed&&topupsParsed.length>0&&topupsParsed[0].isEUR?'EUR':'USD';
+
+  let retryHtml='';
+  if(retryParsed){
+    retryHtml=`
+      <div class="parsed-stat"><div class="val">${retryParsed.total}</div><div class="lbl">Retry послідовностей</div></div>
+      <div class="parsed-stat"><div class="val">${(retryParsed.recoveryRate*100).toFixed(0)}%</div><div class="lbl">Recovery rate</div></div>
+      <div class="parsed-stat"><div class="val">${retryParsed.avgAttempts.toFixed(1)}</div><div class="lbl">Avg спроб</div></div>
+      <div class="parsed-stat"><div class="val" style="color:var(--red)">${fmt(retryParsed.totalRetryDeclines)}</div><div class="lbl">Доп. деклайнів від retry</div></div>`;
+  }
+
+  $('parsedStats').innerHTML=`
+    <div class="parsed-stat"><div class="val">${d.length}</div><div class="lbl">Днів у CSV</div></div>
+    <div class="parsed-stat"><div class="val">${activeDays.length}</div><div class="lbl">Днів з активністю</div></div>
+    <div class="parsed-stat"><div class="val">${fmt(totalAuth)}</div><div class="lbl">Всього auth</div></div>
+    <div class="parsed-stat"><div class="val">${fmt(totalDecl)}</div><div class="lbl">Всього declined</div></div>
+    <div class="parsed-stat"><div class="val">${ltDR}</div><div class="lbl">Lifetime DR</div></div>
+    <div class="parsed-stat"><div class="val">${fmt(totalVerif)}</div><div class="lbl">Верифікацій</div></div>
+    <div class="parsed-stat"><div class="val">${dateRange}</div><div class="lbl">Період</div></div>
+    <div class="parsed-stat"><div class="val">${maxCards}</div><div class="lbl">Макс карток</div></div>
+    ${topupCount>0?`<div class="parsed-stat"><div class="val">${topupCount}</div><div class="lbl">Поповнень</div></div>
+    <div class="parsed-stat"><div class="val">${topupCurrency==='EUR'?'€':'$'}${fmt(Math.round(topupTotal))}</div><div class="lbl">Σ Поповнень (${topupCurrency})</div></div>`:''}
+    ${retryHtml}`;
+}
+
+function autoFillFields(){
+  const eurUsd=+$('c_eurUsd').value||1.06;
+  if(clientParsed&&topupsParsed&&topupsParsed.length>0){
+    const totalTopupsUSD=topupsParsed.reduce((s,t)=>s+(t.isEUR?t.amount*eurUsd:t.amount),0);
+    const totalCharges=clientParsed.reduce((s,d)=>{const okCharges=d.authOK-d.verif;return s+Math.max(0,okCharges);},0);
+    if(totalCharges>0){
+      const estAvgTxn=totalTopupsUSD/totalCharges;
+      const clamped=Math.max(1,Math.min(100,Math.round(estAvgTxn*100)/100));
+      $('c_avgTxn').value=clamped.toFixed(2);
+    }
+  }
+  if(clientParsed&&clientParsed.length>0&&topupsParsed&&topupsParsed.length>0){
+    const firstTxnDate=clientParsed[0].dateStr;
+    let preBalance=0;
+    for(const t of topupsParsed){if(t.date<firstTxnDate){preBalance+=t.isEUR?t.amount*eurUsd:t.amount;}}
+    $('c_startBal').value=Math.round(preBalance);
+  }
+}
+
+// ===== AUTOFILL BMG =====
+async function autofillBMG(){
+  const status=$('bmgStatus');
+  status.textContent='Завантаження...';status.style.color='var(--accent)';
+  const BASE='data/';
+  const files=[
+    {path:BASE+'bmg_txn.csv', type:'txn', label:'Transaction Classification'},
+    {path:BASE+'bmg_cards.csv', type:'cards', label:'Cards by Status'},
+    {path:BASE+'bmg_topups.csv', type:'topups', label:'Поповнення'},
+    {path:BASE+'bmg_retry.csv', type:'retry', label:'Retry Sequences'}
+  ];
+  let loaded=0,failed=0;
+  for(const f of files){
+    try{
+      const resp=await fetch(f.path);
+      if(!resp.ok)throw new Error(resp.status);
+      const text=await resp.text();
+      if(f.type==='txn'){
+        clientParsed=parseTxnCSV(text);
+        $('fn1').textContent=f.label;$('uz1').classList.add('has-file');
+        $('btnClientRun').disabled=false;
+      }else if(f.type==='cards'){
+        cardsParsed=parseCardsCSV(text);
+        $('fn2').textContent=f.label;$('uz2').classList.add('has-file');
+      }else if(f.type==='topups'){
+        topupsParsed=parseTopupsCSV(text);
+        $('fn3').textContent=f.label+` (${topupsParsed.length})`;$('uz3').classList.add('has-file');
+      }else if(f.type==='retry'){
+        retryParsed=parseRetryCSV(text);
+        retryDayMap=buildRetryDayMap(retryParsed);
+        $('fn4').textContent=f.label+` (${retryParsed.total})`;$('uz4').classList.add('has-file');
+      }
+      loaded++;
+    }catch(e){
+      console.warn(`BMG: не вдалось завантажити ${f.path}:`,e);
+      failed++;
+    }
+  }
+  showParsedInfo();autoFillFields();
+  if(loaded>0){
+    status.textContent=`Завантажено ${loaded}/4 файлів${failed?' ('+failed+' недоступні)':''}`;
+    status.style.color=failed?'var(--orange)':'var(--green)';
+  }else{
+    status.textContent='Помилка: файли недоступні. Перевірте папку data/';
+    status.style.color='var(--red)';
+  }
+}
+
+// ===== CLIENT SIMULATION (TAB 2) =====
+function runClientSim(){
+  if(!clientParsed||!clientParsed.length)return alert('Спершу завантажте Transaction Classification CSV');
+
+  const susPct=+$('c_suspendPct').value,grace=+$('c_graceDays').value,drWin=+$('c_drWindow').value;
+  const f1=+$('c_fee1').value,f2=+$('c_fee2').value,f3=+$('c_fee3').value,fB=+$('c_feeBlock').value;
+  const avgTxn=+$('c_avgTxn').value;
+  const eurUsd=+$('c_eurUsd').value;
+  const verifDelay=+$('c_verifDelay').value;
+  let bal=+$('c_startBal').value;
+  currentSusPct=susPct;
+
+  const topupMap={};
+  if(topupsParsed){for(const t of topupsParsed){const amtUSD=t.isEUR?t.amount*eurUsd:t.amount;topupMap[t.date]=(topupMap[t.date]||0)+amtUSD;}}
+
+  const canBlock=$('c_blockEnabled').checked;
+  simData=[];
+  let blocked=false,cumFee=0,cumVerifs=0;
+  // Track pending verifications using delay
+  const verifQueue={}; // day index -> count of verifs that will "activate"
+
+  for(let i=0;i<clientParsed.length;i++){
+    const d=clientParsed[i];
+    const day=i+1;
+    const dayTopup=topupMap[d.dateStr]||0;
+    bal+=dayTopup;
+
+    let activeCards=0;
+    if(cardsParsed&&cardsParsed[d.dateStr]){activeCards=cardsParsed[d.dateStr].active;}
+
+    cumVerifs+=d.verif;
+    // Schedule activation of today's verifications
+    const activateDay=day+verifDelay;
+    verifQueue[activateDay]=(verifQueue[activateDay]||0)+d.verif;
+    // Count how many verifs have activated so far
+    let activatedVerifs=0;
+    for(let dd=1;dd<=day;dd++){activatedVerifs+=(verifQueue[dd]||0);}
+    const openVerifs=Math.max(0,cumVerifs-activatedVerifs);
+
+    const totalAuth=d.totalAuth;
+    const totalDecl=d.totalDecl;
+    const successfulCharges=d.authOK-d.verif;
+    const daySpend=Math.max(0,successfulCharges)*avgTxn;
+    bal-=daySpend;if(bal<0)bal=0;
+
+    // Retry tax from uploaded retry CSV
+    let retryDecl=0,retryRecov=0,origDecl=totalDecl;
+    if(retryDayMap&&retryDayMap[d.dateStr]){
+      const rm=retryDayMap[d.dateStr];
+      retryDecl=rm.retryDecl;
+      retryRecov=rm.retryRecov;
+      origDecl=Math.max(0,totalDecl-retryDecl);
+    }
+
+    // Rolling DR (observed, with retries)
+    const ws=Math.max(0,simData.length-(drWin-1));
+    let wA=totalAuth,wD=totalDecl;
+    for(let j=ws;j<simData.length;j++){wA+=simData[j].tAuth;wD+=simData[j].tDecl;}
+    const dr=wA>0?(wD/wA)*100:0;
+
+    // True DR (without retry declines)
+    let wA2=totalAuth-retryDecl-retryRecov,wD2=origDecl;
+    for(let j=ws;j<simData.length;j++){wA2+=(simData[j].tAuth-simData[j].retryDecl-(simData[j].retryRecov||0));wD2+=simData[j].origDecl;}
+    const trueDR=wA2>0?(wD2/wA2)*100:0;
+
+    const isGrace=day<=grace;
+    if(canBlock){
+      if(!blocked&&dr>=susPct&&!isGrace&&totalAuth>0)blocked=true;
+      if(blocked&&dr<susPct)blocked=false;
+    }
+
+    let tier,feeR,tCls;
+    if(isGrace){tier='Grace';feeR=0;tCls='tier-grace';}
+    else if(blocked){tier='Blocked';feeR=fB;tCls='tier-blocked';}
+    else if(dr<5){tier='0-5%';feeR=0;tCls='tier-free';}
+    else if(dr<10){tier='5-10%';feeR=f1;tCls='tier-warning';}
+    else if(dr<15){tier='10-15%';feeR=f2;tCls='tier-elevated';}
+    else{tier='15-25%';feeR=f3;tCls='tier-critical';}
+
+    const dayFee=totalDecl*feeR;cumFee+=dayFee;
+    // Fee from retries only
+    const retryFee=retryDecl*feeR;
+
+    let st=isGrace?'Grace':blocked?'Blocked':'Active';
+    if(dayTopup>0)st+=' 💰';
+
+    simData.push({
+      day,date:d.dateStr,xLabel:d.dateStr.slice(5),
+      active:activeCards,auth:d.authOK,vfy:d.verif,openVerifs,
+      tAuth:totalAuth,tDecl:totalDecl,
+      origDecl,retryDecl,retryRecov:retryRecov,retryFee,
+      retry:retryDecl+retryRecov,
+      spend:daySpend,dr,trueDR,tier,tCls,feeR,dayFee,cumFee,
+      st,isGrace,blocked,bal:Math.max(0,bal),topup:dayTopup
+    });
+  }
+  $('chartMode').textContent='(реальні дані клієнта)';
+  renderResults();
+}
+
+// ===== TAB 1 SIMULATION =====
+function runSim(){
+  const days=+$('simDays').value;
+  const startDate=new Date($('startDate').value+'T00:00:00');
+  let verifRate=+$('baseVerify').value;
+  const verifRand=$('randomVerify').checked;
+  const susPct=+$('suspendPct').value,grace=+$('graceDays').value,drWin=+$('drWindow').value;
+  const f1=+$('fee1').value,f2=+$('fee2').value,f3=+$('fee3').value,fB=+$('feeBlock').value;
+  const canBlock=$('blockEnabled').checked;
+  const numRetries=+$('retries').value;
+  const recovRate=(+$('recoveryRate').value)/100;
+  const tMin=+$('avgTxnMin').value,tMax=Math.max(tMin,+$('avgTxnMax').value);
+  const dMin=+$('delayMin').value,dMax=Math.max(dMin,+$('delayMax').value);
+  let bal=+$('startBalance').value;
+  currentSusPct=susPct;
+
+  // Retry day spread (based on Google's real pattern)
+  const RETRY_SPREAD=[0.45,0.30,0.15,0.10];
+
+  simData=[];
+  let blocked=false,cumFee=0,activeCards=0,cumVerifs=0;
+  const actMap={},dRange=Math.max(1,dMax-dMin+1);
+  // Retry queue: retryQ[day] = {decl, recov}
+  const retryQ={};
+
+  const flags={};
+  let verifOverrides={};
+  events.forEach(e=>{
+    flags[e.day]=flags[e.day]||{};
+    if(e.type==='topup')flags[e.day].topup=(flags[e.day].topup||0)+e.p1;
+    else if(e.type==='set_verif')verifOverrides[e.day]=e.p1;
+    else if(e.type==='pause_verif')verifOverrides[e.day]=0;
+    else if(e.type==='resume_verif')verifOverrides[e.day]=e.p1;
+    else if(e.type==='custom')flags[e.day].custom={auth:e.p1,declined:e.p2,verif:e.p3};
+  });
+
+  let currentVerifRate=verifRate,verifRateByDay={};
+  const overrideDays=Object.keys(verifOverrides).map(Number).sort((a,b)=>a-b);
+  let oi=0;
+  for(let day=1;day<=days;day++){
+    while(oi<overrideDays.length&&overrideDays[oi]<=day){currentVerifRate=verifOverrides[overrideDays[oi]];oi++;}
+    verifRateByDay[day]=currentVerifRate;
+  }
+
+  // Schedule retries for a failed charge
+  function schedRetries(fromDay){
+    if(numRetries<=0)return;
+    const willRecover=Math.random()<recovRate;
+    let remaining=numRetries;
+    let lastBucket=-1;
+    for(let d=0;d<RETRY_SPREAD.length&&remaining>0;d++){
+      let count=d<RETRY_SPREAD.length-1?Math.max(1,Math.round(numRetries*RETRY_SPREAD[d])):remaining;
+      count=Math.min(count,remaining);
+      const targetDay=fromDay+d;
+      if(targetDay>days){remaining-=count;continue;}
+      if(!retryQ[targetDay])retryQ[targetDay]={decl:0,recov:0};
+      retryQ[targetDay].decl+=count;
+      remaining-=count;
+      lastBucket=targetDay;
+    }
+    // If will recover, convert last retry from decline to recovery
+    if(willRecover&&lastBucket>0&&retryQ[lastBucket]){
+      retryQ[lastBucket].decl--;
+      retryQ[lastBucket].recov++;
+    }
+  }
+
+  for(let day=1;day<=days;day++){
+    const fl=flags[day]||{};
+    const avgTxn=tMin+Math.random()*(tMax-tMin);
+    const curDate=new Date(startDate);curDate.setDate(curDate.getDate()+day-1);
+
+    if(fl.topup)bal+=fl.topup;
+    activeCards+=(actMap[day]||0);
+
+    let auth=0,decl=0,retryDecl=0,retryRecov=0,daySpend=0,vToday=0;
+
+    // Process incoming retries from previous days' failures
+    const incoming=retryQ[day]||{decl:0,recov:0};
+    retryDecl=incoming.decl;
+    retryRecov=incoming.recov;
+
+    if(fl.custom){
+      auth=fl.custom.auth+fl.custom.declined;
+      decl=fl.custom.declined;
+      vToday=fl.custom.verif;
+      const okCharges=fl.custom.auth-fl.custom.verif;
+      daySpend=Math.max(0,okCharges)*avgTxn;
+      bal-=daySpend;if(bal<0){daySpend+=bal;bal=0;}
+    } else {
+      // Verifications: blocked = no new verifications
+      const vr=blocked?0:verifRateByDay[day];
+      vToday=verifRand?Math.round(Math.random()*vr):vr;
+      for(let i=0;i<vToday;i++){
+        const delay=dMin+Math.floor(Math.random()*dRange);
+        const aDay=day+delay;
+        if(aDay<=days)actMap[aDay]=(actMap[aDay]||0)+1;
+      }
+
+      // Charges: cards keep working even when blocked
+      const chRate=+$('chargeRate').value/100;
+      const attempts=Math.round(activeCards*chRate);
+      const fundable=avgTxn>0?Math.min(attempts,Math.floor(bal/avgTxn)):0;
+      const unfunded=attempts-fundable;
+      daySpend=fundable*avgTxn;
+      bal-=daySpend;
+
+      // Schedule retries for each unfunded charge (spread across future days)
+      for(let u=0;u<unfunded;u++){schedRetries(day);}
+
+      auth=attempts; // original charge attempts only (retries tracked separately)
+      decl=unfunded; // original declines only
+    }
+    if(bal<0)bal=0;
+
+    cumVerifs+=vToday;
+    const openVerifs=Math.max(0,cumVerifs-activeCards);
+
+    const totalAuth=auth+vToday+retryDecl+retryRecov;
+    const totalDecl=decl+retryDecl;
+    const origDecl=decl;
+
+    const ws=Math.max(0,simData.length-(drWin-1));
+    let wA=totalAuth,wD=totalDecl;
+    for(let i=ws;i<simData.length;i++){wA+=simData[i].tAuth;wD+=simData[i].tDecl;}
+    const dr=wA>0?(wD/wA)*100:0;
+
+    // True DR (without retries)
+    let wA2=auth+vToday,wD2=decl;
+    for(let i=ws;i<simData.length;i++){wA2+=(simData[i].auth+simData[i].vfy);wD2+=simData[i].origDecl;}
+    const trueDR=wA2>0?(wD2/wA2)*100:0;
+
+    const isGrace=day<=grace;
+    if(canBlock){
+      if(!blocked&&dr>=susPct&&!isGrace)blocked=true;
+      if(blocked&&dr<susPct)blocked=false;
+    }
+
+    let tier,feeR,tCls;
+    if(isGrace){tier='Grace';feeR=0;tCls='tier-grace';}
+    else if(blocked){tier='Blocked';feeR=fB;tCls='tier-blocked';}
+    else if(dr<5){tier='0-5%';feeR=0;tCls='tier-free';}
+    else if(dr<10){tier='5-10%';feeR=f1;tCls='tier-warning';}
+    else if(dr<15){tier='10-15%';feeR=f2;tCls='tier-elevated';}
+    else{tier='15-25%';feeR=f3;tCls='tier-critical';}
+
+    const dayFee=totalDecl*feeR;cumFee+=dayFee;
+    const retryFee=retryDecl*feeR;
+
+    let st=isGrace?'Grace':blocked?'Blocked':'Active';
+    if(fl.topup)st+=' 💰';
+    if(fl.custom)st+=' ✏️';
+
+    simData.push({
+      day,date:fmtDate(curDate),xLabel:fmtDate(curDate).slice(5),
+      active:activeCards,auth,vfy:vToday,openVerifs,
+      tAuth:totalAuth,tDecl:totalDecl,
+      origDecl,retryDecl,retryRecov,retryFee,
+      retry:retryDecl+retryRecov,
+      spend:daySpend,dr,trueDR,tier,tCls,feeR,dayFee,cumFee,
+      st,isGrace,blocked,bal:Math.max(0,bal)
+    });
+  }
+  $('chartMode').textContent='(симуляція)';
+  renderResults();
+}
+
+// ===== SHARED RENDER =====
+function renderResults(){
+  $('results').classList.remove('hidden');
+  // Update DR window label in headers and legend
+  const curTab=$('tab-client').classList.contains('active')?'client':'sim';
+  const drW=curTab==='client'?+$('c_drWindow').value:+$('drWindow').value;
+  const drLabel=drW+'d DR';
+  $('thDR').textContent=drLabel;
+  $('thDR').title=`Observed DR — rolling ${drW}-day window. Всі деклайни (orig + retry) / всі авторизації`;
+  $('thTier').title=`Тарифний тір на основі поточного ${drLabel}. Визначає fee за кожен decline`;
+  $('legDrLabel').textContent=drLabel;
+  $('legDrDesc').textContent=`Observed DR — rolling ${drW}-day window, включає ретраї`;
+  const last=simData[simData.length-1],maxDR=Math.max(...simData.map(d=>d.dr));
+  const bDays=simData.filter(d=>d.blocked).length;
+  const tDec=simData.reduce((s,d)=>s+d.tDecl,0),tAuth=simData.reduce((s,d)=>s+d.tAuth,0);
+  const ltDR=tAuth>0?(tDec/tAuth*100):0;
+  const tSpend=simData.reduce((s,d)=>s+d.spend,0);
+  const firstBlock=simData.find(d=>d.blocked);
+  const feeRatio=tSpend>0?(last.cumFee/tSpend*100):0;
+  const maxCards=Math.max(...simData.map(d=>d.active));
+
+  // Retry tax aggregates
+  const totalOrigDecl=simData.reduce((s,d)=>s+d.origDecl,0);
+  const totalRetryDecl=simData.reduce((s,d)=>s+d.retryDecl,0);
+  const totalRetryRecov=simData.reduce((s,d)=>s+(d.retryRecov||0),0);
+  const totalRetryFee=simData.reduce((s,d)=>s+d.retryFee,0);
+  const origFee=last.cumFee-totalRetryFee;
+  // True LT DR (without retries)
+  const trueAuth=tAuth-totalRetryDecl-totalRetryRecov;
+  const trueLTDR=trueAuth>0?(totalOrigDecl/trueAuth*100):0;
+
+  // Open verifications aggregates
+  const maxOpenVerifs=Math.max(...simData.map(d=>d.openVerifs));
+  const lastOpenVerifs=last.openVerifs;
+  const totalVerifs=simData.reduce((s,d)=>s+d.vfy,0);
+
+  $('summaryGrid').innerHTML=`
+    <div class="summary-card"><div class="value" style="color:${last.cumFee>0?'var(--red)':'var(--green)'}">$${last.cumFee.toFixed(2)}</div><div class="label">Комісії</div></div>
+    <div class="summary-card"><div class="value">${maxDR.toFixed(1)}%</div><div class="label">Макс DR</div></div>
+    <div class="summary-card"><div class="value">${ltDR.toFixed(1)}%</div><div class="label">Lifetime DR</div></div>
+    <div class="summary-card"><div class="value" style="color:var(--accent)">${fmt(maxCards>0?maxCards:last.active)}</div><div class="label">Макс карток</div></div>
+    <div class="summary-card"><div class="value">${fmt(tDec)}</div><div class="label">Деклайнів</div></div>
+    <div class="summary-card"><div class="value">${fmt(tAuth)}</div><div class="label">Авторизацій</div></div>
+    <div class="summary-card"><div class="value" style="color:${bDays?'var(--red)':'var(--green)'}">${bDays}</div><div class="label">Днів блок</div></div>
+    ${tSpend>0?`<div class="summary-card"><div class="value">$${fmt(Math.round(tSpend))}</div><div class="label">Spend</div></div>`:''}
+    ${tSpend>0?`<div class="summary-card"><div class="value" style="color:var(--orange)">${feeRatio.toFixed(2)}%</div><div class="label">Fee/Spend</div></div>`:''}
+    ${firstBlock?`<div class="summary-card"><div class="value" style="color:var(--red)">${firstBlock.date}</div><div class="label">Дата блоку</div></div>`:''}`;
+
+  // Retry Tax Panel
+  if(totalRetryDecl>0||totalRetryRecov>0){
+    $('retryTaxPanel').classList.remove('hidden');
+    const retryPct=tDec>0?((totalRetryDecl/tDec)*100).toFixed(1):0;
+    const insufficientCost=totalRetryFee;
+    $('retryTaxGrid').innerHTML=`
+      <div class="retry-tax-item"><div class="val">${fmt(totalOrigDecl)}</div><div class="lbl">Оригінальних деклайнів</div></div>
+      <div class="retry-tax-item"><div class="val" style="color:var(--red)">${fmt(totalRetryDecl)}</div><div class="lbl">Деклайнів від ретраїв</div></div>
+      <div class="retry-tax-item"><div class="val" style="color:var(--green)">${fmt(totalRetryRecov)}</div><div class="lbl">Recovered (retry → OK)</div></div>
+      <div class="retry-tax-item"><div class="val" style="color:var(--orange)">${retryPct}%</div><div class="lbl">% деклайнів від ретраїв</div></div>
+      <div class="retry-tax-item"><div class="val">${ltDR.toFixed(1)}%</div><div class="lbl">Observed DR (з ретраями)</div></div>
+      <div class="retry-tax-item"><div class="val" style="color:var(--green)">${trueLTDR.toFixed(1)}%</div><div class="lbl">True DR (без ретраїв)</div></div>
+      <div class="retry-tax-item"><div class="val" style="color:var(--red)">$${totalRetryFee.toFixed(2)}</div><div class="lbl">Fee від ретраїв</div></div>
+      <div class="retry-tax-item"><div class="val" style="color:var(--red)">$${insufficientCost.toFixed(2)}</div><div class="lbl">Вартість недобалансу</div></div>`;
+  } else {
+    $('retryTaxPanel').classList.add('hidden');
+  }
+
+  // Open Verifications Panel
+  if(totalVerifs>0){
+    $('openVerifPanel').classList.remove('hidden');
+    $('openVerifGrid').innerHTML=`
+      <div class="retry-tax-item"><div class="val" style="color:var(--blue)">${fmt(totalVerifs)}</div><div class="lbl">Всього верифікацій</div></div>
+      <div class="retry-tax-item"><div class="val" style="color:var(--orange)">${fmt(maxOpenVerifs)}</div><div class="lbl">Макс відкритих</div></div>
+      <div class="retry-tax-item"><div class="val" style="color:${lastOpenVerifs>0?'var(--orange)':'var(--green)'}">${fmt(lastOpenVerifs)}</div><div class="lbl">Відкритих зараз</div></div>
+      <div class="retry-tax-item"><div class="val" style="color:var(--green)">${fmt(totalVerifs-lastOpenVerifs)}</div><div class="lbl">Активовано карток</div></div>`;
+  } else {
+    $('openVerifPanel').classList.add('hidden');
+  }
+
+  $('resBody').innerHTML=simData.map((d,i)=>{
+    const hasActivity=d.tAuth>0||d.tDecl>0||d.vfy>0||d.blocked;
+    if(!hasActivity&&!d.isGrace)return'';
+    const rc=d.isGrace?'grace-row':d.blocked?'blocked-row':'';
+    return`<tr class="${rc}" onmouseenter="updPB(${i})" style="cursor:pointer">
+      <td>${d.date}</td><td style="color:var(--muted)">${d.day}</td>
+      <td style="color:var(--accent);font-weight:600">${fmt(d.active)}</td>
+      <td>${d.auth?fmt(d.auth):'—'}</td>
+      <td style="color:var(--blue)">${d.vfy||'—'}</td>
+      <td style="color:${d.openVerifs>50?'var(--orange)':d.openVerifs>0?'var(--teal)':''};font-weight:${d.openVerifs>0?'600':'400'}">${d.openVerifs||'—'}</td>
+      <td style="color:${d.origDecl?'var(--red)':''}">${d.origDecl?fmt(d.origDecl):'—'}</td>
+      <td style="color:${d.retryDecl?'var(--orange)':''}">${d.retryDecl?fmt(d.retryDecl):'—'}</td>
+      <td style="color:${d.retryRecov?'var(--green)':''}">${d.retryRecov?fmt(d.retryRecov):'—'}</td>
+      <td>${d.spend?'$'+fmt(Math.round(d.spend)):'—'}</td>
+      <td style="font-weight:600">${d.dr.toFixed(1)}%</td>
+      <td style="color:var(--green);font-weight:600">${d.trueDR.toFixed(1)}%</td>
+      <td><span class="tier-badge ${d.tCls}">${d.tier}</span></td>
+      <td>$${d.feeR.toFixed(2)}</td>
+      <td class="fee-cell" style="color:${d.dayFee>0?'var(--orange)':''}">${d.dayFee>0?'$'+d.dayFee.toFixed(2):'—'}</td>
+      <td class="fee-cell">$${d.cumFee.toFixed(2)}</td>
+      <td style="color:${typeof d.bal==='number'&&d.bal<100?'var(--red)':''}">${typeof d.bal==='number'?'$'+fmt(Math.round(d.bal)):'—'}</td>
+      <td>${d.st}</td></tr>`;
+  }).join('');
+
+  updPB(simData.length-1);drawChart();
+  $('results').scrollIntoView({behavior:'smooth'});
+}
+
+function updPB(idx){
+  const d=simData[idx],sus=currentSusPct;
+  const z5=(5/sus)*100,z10=(5/sus)*100,z15=(5/sus)*100,zR=100-z5-z10-z15;
+  $('zG').style.width=z5+'%';$('zY').style.width=z10+'%';$('zO').style.width=z15+'%';$('zR').style.width=zR+'%';
+  $('pFill').style.width=Math.min(100,d.dr/sus*100)+'%';
+  const lbl=$('pDR');lbl.textContent=d.dr.toFixed(1)+'%';
+  lbl.style.color=d.dr>=sus?'var(--darkred)':d.dr>=15?'var(--red)':d.dr>=10?'var(--orange)':d.dr>=5?'var(--yellow)':'var(--green)';
+  $('m5').style.left=z5+'%';$('m10').style.left=(z5+z10)+'%';$('m15').style.left=(z5+z10+z15)+'%';
+  $('pbLabel').textContent=`— ${d.date} (день ${d.day}) | ${d.st}`;
+  const slc=simData.slice(0,idx+1);
+  const lt=(slc.reduce((s,x)=>s+x.tDecl,0)/Math.max(1,slc.reduce((s,x)=>s+x.tAuth,0))*100);
+  $('pStatus').innerHTML=`
+    <span><span class="status-dot" style="background:var(--orange)"></span>Fee: $${d.dayFee.toFixed(2)}</span>
+    <span><span class="status-dot" style="background:var(--red)"></span>Σ Fee: $${d.cumFee.toFixed(2)}</span>
+    <span><span class="status-dot" style="background:var(--blue)"></span>LT DR: ${lt.toFixed(1)}%</span>
+    <span><span class="status-dot" style="background:var(--green)"></span>True DR: ${d.trueDR.toFixed(1)}%</span>
+    ${d.bal>0?`<span><span class="status-dot" style="background:var(--green)"></span>Баланс: $${fmt(Math.round(d.bal))}</span>`:''}
+    <span><span class="status-dot" style="background:var(--accent)"></span>Карток: ${fmt(d.active)}</span>
+    ${d.openVerifs>0?`<span><span class="status-dot" style="background:var(--teal)"></span>Очік: ${fmt(d.openVerifs)}</span>`:''}`;
+}
+
+function drawChart(){
+  const canvas=$('drChart'),rect=canvas.parentElement.getBoundingClientRect();
+  const dpr=window.devicePixelRatio||1;canvas.width=rect.width*dpr;canvas.height=rect.height*dpr;
+  const ctx=canvas.getContext('2d');ctx.scale(dpr,dpr);
+  const W=rect.width,H=rect.height;ctx.clearRect(0,0,W,H);
+  const sus=currentSusPct;
+  const maxY=Math.max(sus+10,Math.max(...simData.map(d=>d.dr))+5);
+  const pad={t:10,b:24,l:38,r:10},cH=H-pad.t-pad.b;
+  [[5,'rgba(34,197,94,.06)'],[10,'rgba(234,179,8,.06)'],[15,'rgba(249,115,22,.06)'],[sus,'rgba(239,68,68,.06)']].reduce((prev,[pct,col])=>{const y1=pad.t+(1-pct/maxY)*cH,y0=pad.t+(1-prev/maxY)*cH;ctx.fillStyle=col;ctx.fillRect(pad.l,y1,W-pad.l-pad.r,y0-y1);return pct;},0);
+  [5,10,15,sus].forEach(v=>{const y=pad.t+(1-v/maxY)*cH;ctx.strokeStyle=v===sus?'rgba(220,38,38,.4)':'rgba(0,0,0,.08)';ctx.lineWidth=v===sus?1.5:0.5;ctx.setLineDash(v===sus?[4,3]:[]);ctx.beginPath();ctx.moveTo(pad.l,y);ctx.lineTo(W-pad.r,y);ctx.stroke();ctx.setLineDash([]);ctx.fillStyle='#6b7085';ctx.font='10px Inter,sans-serif';ctx.fillText(v+'%',2,y+4);});
+  ctx.fillStyle='#6b7085';ctx.font='9px Inter,sans-serif';
+  const step=Math.max(1,Math.floor(simData.length/12)),xW=W-pad.l-pad.r;
+  simData.forEach((d,i)=>{if(i%step===0||i===simData.length-1){const x=pad.l+(i/Math.max(1,simData.length-1))*xW;ctx.fillText(d.xLabel,x-12,H-4);}});
+
+  // True DR line (green, dashed)
+  ctx.lineWidth=1.5;ctx.strokeStyle='rgba(22,163,74,.5)';ctx.setLineDash([4,3]);ctx.beginPath();
+  let started2=false;
+  simData.forEach((d,i)=>{
+    const x=pad.l+(i/Math.max(1,simData.length-1))*xW,y=pad.t+(1-d.trueDR/maxY)*cH;
+    if(!started2){ctx.moveTo(x,y);started2=true;}else{ctx.lineTo(x,y);}
+  });ctx.stroke();ctx.setLineDash([]);
+
+  // Observed DR line (purple, solid)
+  ctx.lineWidth=2;ctx.strokeStyle='#6366f1';ctx.beginPath();
+  let started=false;
+  simData.forEach((d,i)=>{
+    const x=pad.l+(i/Math.max(1,simData.length-1))*xW,y=pad.t+(1-d.dr/maxY)*cH;
+    if(!started){ctx.moveTo(x,y);started=true;}else{ctx.lineTo(x,y);}
+  });ctx.stroke();
+
+  simData.forEach((d,i)=>{const x=pad.l+(i/Math.max(1,simData.length-1))*xW,y=pad.t+(1-d.dr/maxY)*cH;ctx.beginPath();ctx.arc(x,y,2.5,0,Math.PI*2);ctx.fillStyle=d.blocked?'#991b1b':d.dr>=15?'#ef4444':d.dr>=10?'#f97316':d.dr>=5?'#eab308':'#22c55e';ctx.fill();});
+
+  // Legend
+  ctx.font='11px Inter,sans-serif';
+  ctx.fillStyle='#6366f1';ctx.fillRect(W-180,8,14,3);ctx.fillText('Observed DR',W-162,13);
+  ctx.fillStyle='rgba(22,163,74,.5)';ctx.setLineDash([4,3]);ctx.beginPath();ctx.moveTo(W-180,24);ctx.lineTo(W-166,24);ctx.stroke();ctx.setLineDash([]);
+  ctx.fillStyle='#16a34a';ctx.fillText('True DR',W-162,28);
+}
+
+function resetSim(){simData=[];$('results').classList.add('hidden');$('retryTaxPanel').classList.add('hidden');$('openVerifPanel').classList.add('hidden');}
+function resetClient(){
+  clientParsed=null;cardsParsed=null;topupsParsed=null;retryParsed=null;retryDayMap=null;simData=[];
+  $('results').classList.add('hidden');$('retryTaxPanel').classList.add('hidden');$('openVerifPanel').classList.add('hidden');
+  $('parsedInfo').classList.add('hidden');
+  $('fn1').textContent='';$('fn2').textContent='';$('fn3').textContent='';$('fn4').textContent='';
+  $('uz1').classList.remove('has-file');$('uz2').classList.remove('has-file');$('uz3').classList.remove('has-file');$('uz4').classList.remove('has-file');
+  $('file1').value='';$('file2').value='';$('file3').value='';$('file4').value='';
+  $('btnClientRun').disabled=true;
+}
+
+events=[];renderEv();
+
+// ===== EXPORT FUNCTIONS =====
+function getSimParams(){
+  const isClient=$('tab-client').classList.contains('active');
+  if(isClient){
+    return{
+      mode:'Client Model (CSV data)',
+      drWindow:+$('c_drWindow').value,
+      graceDays:+$('c_graceDays').value,
+      suspendPct:+$('c_suspendPct').value,
+      blockEnabled:$('c_blockEnabled').checked,
+      fees:{t1:+$('c_fee1').value,t2:+$('c_fee2').value,t3:+$('c_fee3').value,block:+$('c_feeBlock').value},
+      avgTxn:+$('c_avgTxn').value,
+      eurUsd:+$('c_eurUsd').value,
+      verifDelay:+$('c_verifDelay').value,
+      startBal:+$('c_startBal').value
+    };
+  }
+  return{
+    mode:'Manual Simulation',
+    startDate:$('startDate').value,
+    simDays:+$('simDays').value,
+    merchant:$('merchant').value,
+    startBalance:+$('startBalance').value,
+    verifPerDay:+$('baseVerify').value,
+    randomVerif:$('randomVerify').checked,
+    avgTxnRange:[+$('avgTxnMin').value,+$('avgTxnMax').value],
+    delayRange:[+$('delayMin').value,+$('delayMax').value],
+    retries:+$('retries').value,
+    chargeRate:+$('chargeRate').value,
+    recoveryRate:+$('recoveryRate').value,
+    drWindow:+$('drWindow').value,
+    graceDays:+$('graceDays').value,
+    suspendPct:+$('suspendPct').value,
+    blockEnabled:$('blockEnabled').checked,
+    fees:{t1:+$('fee1').value,t2:+$('fee2').value,t3:+$('fee3').value,block:+$('feeBlock').value},
+    events:events.map(e=>({day:e.day,type:e.type,value:e.p1,...(e.p2!=null?{p2:e.p2}:{})}))
+  };
+}
+
+function exportCSV(){
+  if(!simData.length)return alert('Спершу запустіть симуляцію');
+  const drW=getSimParams().drWindow||7;
+  const hdr=['Date','Day','Active Cards','Auth','Verif','Open Verif','Orig Decl','Retry Decl','Retry Recov','Spend ($)',drW+'d DR (%)','True DR (%)','Tier','Fee Rate ($)','Day Fee ($)','Cum Fee ($)','Balance ($)','Status'];
+  const rows=simData.filter(d=>d.tAuth>0||d.tDecl>0||d.vfy>0||d.blocked).map(d=>
+    [d.date,d.day,d.active,d.auth,d.vfy,d.openVerifs,d.origDecl,d.retryDecl,d.retryRecov||0,d.spend?d.spend.toFixed(2):'0',d.dr.toFixed(2),d.trueDR.toFixed(2),d.tier,d.feeR.toFixed(2),d.dayFee.toFixed(2),d.cumFee.toFixed(2),typeof d.bal==='number'?d.bal.toFixed(2):'',d.st].join(',')
+  );
+  const csv=hdr.join(',')+'\n'+rows.join('\n');
+  dl(csv,'simulation_export.csv','text/csv');
+}
+
+function exportMD(){
+  if(!simData.length)return alert('Спершу запустіть симуляцію');
+  const p=getSimParams();
+  const last=simData[simData.length-1];
+  const tDec=simData.reduce((s,d)=>s+d.tDecl,0);
+  const tAuth=simData.reduce((s,d)=>s+d.tAuth,0);
+  const ltDR=tAuth>0?(tDec/tAuth*100):0;
+  const maxDR=Math.max(...simData.map(d=>d.dr));
+  const bDays=simData.filter(d=>d.blocked).length;
+  const tSpend=simData.reduce((s,d)=>s+d.spend,0);
+  const maxCards=Math.max(...simData.map(d=>d.active));
+  const firstBlock=simData.find(d=>d.blocked);
+  const totalOrigDecl=simData.reduce((s,d)=>s+d.origDecl,0);
+  const totalRetryDecl=simData.reduce((s,d)=>s+d.retryDecl,0);
+  const totalRetryRecov=simData.reduce((s,d)=>s+(d.retryRecov||0),0);
+  const totalRetryFee=simData.reduce((s,d)=>s+d.retryFee,0);
+  const trueAuth=tAuth-totalRetryDecl-totalRetryRecov;
+  const trueLTDR=trueAuth>0?(totalOrigDecl/trueAuth*100):0;
+  const maxOpenVerifs=Math.max(...simData.map(d=>d.openVerifs));
+  const totalVerifs=simData.reduce((s,d)=>s+d.vfy,0);
+  const feeRatio=tSpend>0?(last.cumFee/tSpend*100):0;
+
+  // Find critical days (DR spikes, blocks, topups)
+  const critical=simData.filter(d=>d.blocked||d.dr>=15||d.st.includes('💰')||d.dayFee>5);
+
+  let md=`# Decline Fee Simulation Report
+> Generated: ${new Date().toISOString().slice(0,16).replace('T',' ')} | Spendbase Decline Fee Simulator
+
+---
+
+## Simulator Knowledge Base — Full Mechanics & Formulas
+
+This report was generated by the **Spendbase Decline Fee Simulator** — a tool that models how decline rates (DR) affect fees when media buyers use virtual cards for advertising. Below is the complete specification of all mechanics, formulas, and relationships used to produce the numbers in this report. Use this to understand, validate, and advise on the results.
+
+### 1. Domain: Virtual Cards for Media Buying
+
+Media buyers (advertisers) use virtual cards issued by Spendbase to pay for ads on platforms like Google Ads, Facebook, TikTok, etc. Each card is funded from a shared account balance. When balance runs out, charge attempts are declined by the card issuer, which triggers decline fees from Spendbase.
+
+### 2. Verifications (Card-Campaign Bindings)
+
+A **verification** is NOT a new card. It is a **card-campaign binding** — one physical card can have multiple verifications (e.g., Google Workspace + Google Ads = 2 verifications on 1 card).
+
+Each verification generates a $0 (or $1) authorization that **always succeeds**. This is critical because these successful $0 auths count in the denominator of the DR formula, **diluting the decline rate**.
+
+- Parameter: \`verifPerDay\` = new verifications created per day
+- If \`randomVerif = true\`, actual daily count is random between 0 and verifPerDay
+- Verifications do NOT immediately generate real charges — there is an **activation delay**
+
+### 3. Activation Delay (Verification → First Charge)
+
+After a verification is created, there is a configurable delay before the card starts generating real charge authorizations. Each verification gets a random delay from the range [\`delayMin\`, \`delayMax\`] days.
+
+- During this delay, the verification is counted as an **"open verification"** (Очік. in the table)
+- \`openVerifs = cumulative verifications - cards that have passed their delay period\`
+- Open verifications represent exposure: they dilute DR now but will add charge pressure later
+
+### 4. Daily Charge Attempts
+
+Each day, a percentage of **active cards** (those past their activation delay) attempt to charge:
+
+\`\`\`
+chargeAttempts = activeCards × (chargeRate / 100)
+\`\`\`
+
+- \`chargeRate\` is typically 10-15% for Google Ads (not every card charges every day)
+- Each charge attempt has an average transaction amount randomized from [\`avgTxnMin\`, \`avgTxnMax\`]
+
+**Funding logic:**
+\`\`\`
+fundable = min(chargeAttempts, floor(balance / avgTxn))
+unfunded = chargeAttempts - fundable
+daySpend = fundable × avgTxn
+balance -= daySpend
+\`\`\`
+
+- \`fundable\` = charges the balance can cover → these SUCCEED
+- \`unfunded\` = charges that exceed balance → these are DECLINED
+- When balance = $0, ALL charge attempts are declined
+
+### 5. Decline Rate (DR) — Rolling Window
+
+The core metric. Calculated as a **rolling N-day window** (configurable, default 7 days):
+
+\`\`\`
+Observed DR = (sum of ALL declines in window) / (sum of ALL authorizations in window) × 100%
+\`\`\`
+
+Where for each day in the window:
+- **Total Authorizations** = successful charges + verifications + retry declines + retry recoveries
+- **Total Declines** = original declines (unfunded charges) + retry declines
+
+IMPORTANT: Verifications ($0 auths) are included in "total authorizations" denominator but never in declines → they DILUTE DR. This is a key strategy lever.
+
+### 6. True DR (Without Retries)
+
+A separate metric that strips out retry effects to show the "real" decline rate:
+
+\`\`\`
+True DR = (original declines only) / (total auths - retry declines - retry recoveries) × 100%
+\`\`\`
+
+The difference between Observed DR and True DR = the **Retry Tax** — how much retries amplify the visible decline rate.
+
+### 7. Retry Amplification Model
+
+When a charge fails, the merchant (e.g., Google) automatically retries it multiple times across several days. This is the **primary amplifier of DR** — one failed charge can produce 5+ additional decline events.
+
+**Retry spread pattern** (based on real Google Ads data from 356 analyzed sequences):
+\`\`\`
+Day 0 (same day):  ~45% of retries
+Day +1:            ~30% of retries
+Day +2:            ~15% of retries
+Day +3:            ~10% of retries
+\`\`\`
+
+**Recovery rate**: ~${p.recoveryRate||40}% of retry sequences eventually succeed on their last attempt (because the client topped up balance between retries).
+
+**How retries affect the formula:**
+- Each retry attempt = separate authorization event
+- Failed retries = additional declines in the DR numerator AND denominator
+- Successful retries (recovery) = authorization in denominator only (reduces DR slightly)
+- Net effect: retries almost always INCREASE observed DR
+
+**Retry Tax** = the fee cost attributable purely to retry declines:
+\`\`\`
+retryFee = retryDeclines × feeRate(currentTier)
+\`\`\`
+
+### 8. Fee Tiers (Progressive)
+
+Fees are charged per decline, with the rate determined by the current rolling DR:
+
+| DR Range | Fee per Decline |
+|----------|----------------|
+| 0 – 5% | $0.00 (free) |
+| 5 – 10% | $${p.fees.t1} |
+| 10 – 15% | $${p.fees.t2} |
+| 15 – 25% | $${p.fees.t3} |
+| Post-block | $${p.fees.block} |
+
+\`\`\`
+dayFee = totalDeclines(origDecl + retryDecl) × feeRate(tier)
+cumulativeFee += dayFee
+\`\`\`
+
+**Grace period**: First ${p.fees.graceDays||7} days → DR is tracked, but fee = $0 regardless of tier.
+
+### 9. Account Blocking
+
+When rolling DR reaches **${p.suspendPct||25}%** (configurable threshold):
+
+- **New verifications STOP** (no new card-campaign bindings)
+- **Existing cards KEEP charging** (charges don't stop!)
+- This means: no new DR dilution from verifications, but decline pressure continues
+- Post-block fee tier applies ($${p.fees.block}/decline)
+- **Auto-unblock**: When DR drops below threshold, verifications resume automatically
+
+This creates a dangerous feedback loop: block → no dilution → DR stays high → more fees.
+
+### 10. Balance & Top-ups
+
+- Balance starts at a configured amount
+- Each successful charge reduces balance
+- When balance = $0, all charges decline → DR spike
+- Top-ups (events) add funds, enabling charges to succeed again
+- The timing of top-ups is critical: late top-ups trigger retry cascades
+
+### 11. Column Reference (Day-by-Day Table)
+
+| Column | Meaning |
+|--------|---------|
+| Date | Calendar date |
+| Day | Sequential day number from simulation start |
+| Active | Cards past verification + delay, can generate charges |
+| Auth | Successful charge authorizations (not verifications, not retries) |
+| Verif | New verifications (card-campaign bindings). $0 auth, always OK, dilutes DR |
+| Open Verif | Verifications without any charge attempt yet (waiting for delay) |
+| Orig.D | Original declines — first failed charge attempts (no retries) |
+| Retry.D | Retry declines — merchant re-attempted and failed again |
+| Retry.R | Retry recoveries — merchant re-attempted and succeeded |
+| Spend | Day spend = successful charges × avg transaction amount |
+| ${p.drWindow||7}d DR | Observed DR — rolling ${p.drWindow||7}-day window including retries |
+| True DR | DR excluding retries = origDecl / (auth + verif) over window |
+| Tier | Fee tier based on current DR |
+| Fee/d | Fee rate per single decline in current tier |
+| Fee | Total fee for this day = all declines × fee rate |
+| Σ Fee | Cumulative fees from day 1 |
+| Balance | Account balance. $0 = all charges will decline |
+| Status | Grace / Active / Blocked / 💰 (top-up happened) |
+
+### 12. Key Relationships & Strategy Levers
+
+1. **Balance is king**: Maintaining sufficient balance prevents the entire decline cascade. One day at $0 balance with 100 active cards can trigger hundreds of retry declines over 3-4 days.
+2. **Verification pacing**: More verifications = more DR dilution, but also more future charge pressure. Optimal rate depends on balance runway.
+3. **Retry tax is hidden cost**: The difference between True DR and Observed DR shows how much retries inflate fees. With 5 retries per fail, one original decline becomes 6 decline events.
+4. **Blocking trap**: Once blocked, no new verifications → no dilution → DR stays high → fees accumulate. Prevention is far cheaper than recovery.
+5. **Top-up timing**: Top-up BEFORE balance hits $0 to prevent cascade. Even 1 day delay can cause a DR spike that takes 7+ days to recover from (because of the rolling window).
+
+**Goal**: Help this client minimize decline fees. Analyze the data below and suggest actionable improvements to their balance management, verification pacing, and response strategy.
+
+---
+
+## Simulation Parameters
+
+| Parameter | Value |
+|-----------|-------|
+| Mode | ${p.mode} |
+`;
+
+  if(p.mode==='Manual Simulation'){
+    md+=`| Period | ${p.startDate} → ${p.simDays} days |
+| Merchant | ${p.merchant} |
+| Start Balance | $${p.startBalance} |
+| Verifications/day | ${p.verifPerDay}${p.randomVerif?' (random)':''} |
+| Avg Transaction | $${p.avgTxnRange[0]} – $${p.avgTxnRange[1]} |
+| Delay verif→charge | ${p.delayRange[0]} – ${p.delayRange[1]} days |
+| Retries per fail | ${p.retries} |
+| Charge rate/day | ${p.chargeRate}% of active cards |
+| Recovery rate | ${p.recoveryRate}% |
+`;
+  } else {
+    md+=`| Start Balance | $${p.startBal} |
+| Avg Transaction | $${p.avgTxn} |
+| EUR→USD rate | ${p.eurUsd} |
+| Verif delay | ${p.verifDelay} days |
+`;
+  }
+
+  md+=`| DR Window | ${p.drWindow} days |
+| Grace Period | ${p.graceDays} days |
+| Block Threshold | ${p.suspendPct}% DR |
+| Block Enabled | ${p.blockEnabled?'Yes':'No'} |
+| Fee 5-10% DR | $${p.fees.t1} |
+| Fee 10-15% DR | $${p.fees.t2} |
+| Fee 15-25% DR | $${p.fees.t3} |
+| Post-block Fee | $${p.fees.block} |
+
+`;
+
+  if(p.events&&p.events.length){
+    md+=`### Scheduled Events\n\n`;
+    md+=`| Day | Type | Value |\n|-----|------|-------|\n`;
+    p.events.forEach(e=>{
+      const labels={topup:'Top-up',set_verif:'Set verif rate',pause_verif:'Pause verif',resume_verif:'Resume verif',custom:'Custom day'};
+      md+=`| ${e.day} | ${labels[e.type]||e.type} | ${e.type==='topup'?'$'+e.value:e.type==='custom'?'auth:'+e.value+' decl:'+e.p2:e.value} |\n`;
+    });
+    md+='\n';
+  }
+
+  md+=`---
+
+## Key Results
+
+| Metric | Value |
+|--------|-------|
+| Total Fees | $${last.cumFee.toFixed(2)} |
+| Max ${p.drWindow}d DR | ${maxDR.toFixed(1)}% |
+| Lifetime DR | ${ltDR.toFixed(1)}% |
+| True DR (no retries) | ${trueLTDR.toFixed(1)}% |
+| Max Active Cards | ${fmt(maxCards)} |
+| Total Authorizations | ${fmt(tAuth)} |
+| Total Declines | ${fmt(tDec)} |
+| Days Blocked | ${bDays} |
+${firstBlock?`| First Block Date | ${firstBlock.date} |`:''}
+${tSpend>0?`| Total Spend | $${fmt(Math.round(tSpend))} |`:''}
+${tSpend>0?`| Fee/Spend Ratio | ${feeRatio.toFixed(2)}% |`:''}
+
+`;
+
+  if(totalRetryDecl>0||totalRetryRecov>0){
+    const retryPct=tDec>0?((totalRetryDecl/tDec)*100).toFixed(1):0;
+    md+=`### Retry Tax Analysis
+
+| Metric | Value |
+|--------|-------|
+| Original Declines | ${fmt(totalOrigDecl)} |
+| Retry Declines | ${fmt(totalRetryDecl)} |
+| Retry Recoveries | ${fmt(totalRetryRecov)} |
+| % Declines from Retries | ${retryPct}% |
+| Observed DR | ${ltDR.toFixed(1)}% |
+| True DR (without retries) | ${trueLTDR.toFixed(1)}% |
+| Fee from Retries | $${totalRetryFee.toFixed(2)} |
+
+`;
+  }
+
+  if(totalVerifs>0){
+    md+=`### Open Verifications
+
+| Metric | Value |
+|--------|-------|
+| Total Verifications | ${fmt(totalVerifs)} |
+| Max Open (pending) | ${fmt(maxOpenVerifs)} |
+| Currently Open | ${fmt(last.openVerifs)} |
+| Activated | ${fmt(totalVerifs-last.openVerifs)} |
+
+`;
+  }
+
+  // DR timeline: key phases
+  md+=`---
+
+## DR Timeline (Day-by-Day Detail)
+
+\`\`\`
+Date       | Day | Active | Auth  | Verif | Orig.D | Retry.D | Retry.R | ${p.drWindow}d DR  | True DR | Tier     | Fee    | Σ Fee   | Balance   | Status
+`;
+  simData.forEach(d=>{
+    if(!d.tAuth&&!d.tDecl&&!d.vfy&&!d.blocked)return;
+    const pad=(v,w)=>(v+'').padStart(w);
+    const padr=(v,w)=>(v+'').padEnd(w);
+    md+=`${padr(d.date,10)} | ${pad(d.day,3)} | ${pad(fmt(d.active),6)} | ${pad(d.auth?fmt(d.auth):'-',5)} | ${pad(d.vfy||'-',5)} | ${pad(d.origDecl?fmt(d.origDecl):'-',6)} | ${pad(d.retryDecl?fmt(d.retryDecl):'-',7)} | ${pad(d.retryRecov?fmt(d.retryRecov):'-',7)} | ${pad(d.dr.toFixed(1)+'%',6)} | ${pad(d.trueDR.toFixed(1)+'%',7)} | ${padr(d.tier,8)} | $${pad(d.dayFee.toFixed(2),5)} | $${pad(d.cumFee.toFixed(2),6)} | $${pad(typeof d.bal==='number'?fmt(Math.round(d.bal)):'-',8)} | ${d.st}
+`;
+  });
+  md+=`\`\`\`
+
+`;
+
+  // Critical moments
+  if(critical.length){
+    md+=`---
+
+## Critical Moments
+
+These days had significant events (DR ≥ 15%, blocking, top-ups, or high daily fees):
+
+| Date | Day | Event | DR | Fee | Balance |
+|------|-----|-------|----|-----|---------|
+`;
+    critical.forEach(d=>{
+      let ev=[];
+      if(d.blocked)ev.push('BLOCKED');
+      if(d.dr>=20)ev.push('DR Critical');else if(d.dr>=15)ev.push('DR High');
+      if(d.st.includes('💰'))ev.push('Top-up');
+      if(d.dayFee>5)ev.push('High fee');
+      md+=`| ${d.date} | ${d.day} | ${ev.join(', ')} | ${d.dr.toFixed(1)}% | $${d.dayFee.toFixed(2)} | $${typeof d.bal==='number'?fmt(Math.round(d.bal)):'-'} |\n`;
+    });
+    md+='\n';
+  }
+
+  md+=`---
+
+## Questions for Discussion
+
+1. **Balance management**: How can the client prevent balance depletion that triggers decline cascades? What top-up frequency and amount would be optimal?
+2. **Verification pacing**: Is the current verification rate appropriate? Should the client slow down when balance is low?
+3. **Retry impact**: Retries account for ${totalRetryDecl>0?((totalRetryDecl/(totalOrigDecl+totalRetryDecl))*100).toFixed(0):'0'}% of all declines. What strategies can reduce retry amplification?
+4. **Recovery plan**: After a block event, what's the fastest path to getting DR below ${p.suspendPct}%?
+5. **Fee optimization**: Are there tier boundaries the client is hovering around where small improvements would significantly reduce costs?
+`;
+
+  dl(md,'simulation_report.md','text/markdown');
+}
+
+// ===== TEMPLATE & IMPORT =====
+function downloadTemplate(){
+  const template={
+    "_meta":{
+      "type":"spendbase_decline_fee_simulator",
+      "version":"1.0",
+      "description":"Spendbase Decline Fee Simulator — Template for AI-assisted scenario modeling",
+      "instructions_for_ai":[
+        "## What is this file?",
+        "This is a configuration template for the Spendbase Decline Fee Simulator.",
+        "Your job: help the user model a realistic media buying scenario by filling in the 'params', 'fees', and 'events' sections below.",
+        "Once filled, the user will import this JSON into the simulator to run the model.",
+        "",
+        "## How the simulator works",
+        "The simulator models what happens when a media buyer (advertiser) uses virtual cards to pay for ads.",
+        "",
+        "### Core mechanics:",
+        "1. VERIFICATIONS: The client binds cards to ad campaigns. Each verification = $0/$1 auth that always succeeds. This DILUTES the decline rate (DR) because it adds to total auths without adding declines.",
+        "2. ACTIVATION DELAY: After verification, there's a delay of N days before the card starts generating real charge authorizations.",
+        "3. CHARGE ATTEMPTS: Each day, a percentage of active cards attempt to charge (typically 10-15%). If the account balance covers it → success. If not → DECLINE.",
+        "4. DECLINE RATE (DR): Calculated as a rolling N-day window: declined auths / total auths × 100%. The window size is configurable (default 7 days).",
+        "5. RETRIES: When a charge fails, the merchant (Google/Facebook) retries it multiple times across several days. Pattern: ~45% on day 0, ~30% day+1, ~15% day+2, ~10% day+3. About 40% of retry sequences eventually succeed (if balance is topped up).",
+        "6. FEE TIERS: Based on the rolling DR percentage:",
+        "   - 0-5% DR → $0 fee per decline",
+        "   - 5-10% DR → $0.15 per decline",
+        "   - 10-15% DR → $0.25 per decline",
+        "   - 15-25% DR → $0.75 per decline",
+        "   - Post-block → $0.10 per decline",
+        "7. BLOCKING: When DR reaches the threshold (default 25%), new verifications stop. Existing cards KEEP charging. Auto-unblock when DR drops below threshold.",
+        "8. BALANCE: When balance hits $0, ALL charge attempts decline → DR spikes rapidly.",
+        "",
+        "### Key relationships:",
+        "- More verifications/day → lower DR (dilution), but also more cards that will eventually need balance",
+        "- Higher balance → fewer declines → lower DR → lower fees",
+        "- Retries AMPLIFY observed DR: one failed charge can generate 5+ additional decline events",
+        "- Top-ups at the right time can prevent DR cascades",
+        "",
+        "## How to fill this template",
+        "1. Ask the user about their scenario: what merchant, how many cards, what budget, etc.",
+        "2. Fill 'params' section with realistic values based on the user's answers.",
+        "3. Fill 'events' section to model real-world behavior: top-ups, pausing verifications, etc.",
+        "4. You can leave 'fees' at defaults unless the user has custom fee arrangements.",
+        "",
+        "## Events reference",
+        "Events modify behavior on specific days:",
+        "- 'topup': Add money to account. Fields: day, type:'topup', value (amount in USD)",
+        "- 'set_verif': Change verifications per day. Fields: day, type:'set_verif', value (new rate)",
+        "- 'pause_verif': Stop all verifications. Fields: day, type:'pause_verif'",
+        "- 'resume_verif': Resume verifications at the base rate from params. Fields: day, type:'resume_verif'",
+        "- 'custom': Override all metrics for a specific day. Fields: day, type:'custom', auth (successful), declined, verif",
+        "",
+        "## Typical scenarios to discuss with the user:",
+        "- 'Starting fresh': New account, gradual ramp-up of verifications",
+        "- 'Running out of balance': What happens when funds deplete mid-campaign",
+        "- 'Aggressive scaling': High verification rate, testing DR limits",
+        "- 'Recovery after block': Account was blocked, modeling the path back",
+        "- 'Optimal top-up schedule': Finding the right timing and amounts",
+        "",
+        "## IMPORTANT: Return ONLY this JSON structure with filled values. Do not add extra fields."
+      ]
+    },
+    "params":{
+      "startDate":"2026-01-20",
+      "simDays":100,
+      "merchant":"Google",
+      "startBalance":500,
+      "verifPerDay":50,
+      "randomVerif":true,
+      "avgTxnMin":3,
+      "avgTxnMax":20,
+      "delayMin":3,
+      "delayMax":7,
+      "retries":5,
+      "chargeRate":12,
+      "recoveryRate":40,
+      "_hints":{
+        "startDate":"Simulation start date (YYYY-MM-DD)",
+        "simDays":"Number of days to simulate (7-365)",
+        "merchant":"Google | Google Ads | Facebook | TikTok | LinkedIn | Other",
+        "startBalance":"Starting account balance in USD",
+        "verifPerDay":"New card-campaign bindings per day (0-500). Higher = more dilution but more future charges",
+        "randomVerif":"true = random 0..verifPerDay each day; false = exact number",
+        "avgTxnMin":"Min average transaction amount ($). Typical: $1-$10",
+        "avgTxnMax":"Max average transaction amount ($). Typical: $5-$50",
+        "delayMin":"Min days from verification to first charge attempt (0-30)",
+        "delayMax":"Max days from verification to first charge attempt (0-30)",
+        "retries":"Merchant retry attempts per failed charge (0-20). Google typically does 4-6",
+        "chargeRate":"Percent of active cards that attempt charge each day (1-100). Google Ads: ~12%",
+        "recoveryRate":"Percent of retry sequences where last retry succeeds (0-100). Real data: ~40%"
+      }
+    },
+    "fees":{
+      "graceDays":7,
+      "drWindow":7,
+      "suspendPct":25,
+      "blockEnabled":true,
+      "fee_5_10":0.15,
+      "fee_10_15":0.25,
+      "fee_15_25":0.75,
+      "feeBlock":0.10,
+      "_hints":{
+        "graceDays":"Fee-free period at start (days). DR is tracked but no fees charged",
+        "drWindow":"Rolling window for DR calculation (days). Default: 7",
+        "suspendPct":"DR threshold for account blocking (%)",
+        "blockEnabled":"true = block verifications when DR exceeds threshold",
+        "fee_5_10":"Fee per decline when DR is 5-10%",
+        "fee_10_15":"Fee per decline when DR is 10-15%",
+        "fee_15_25":"Fee per decline when DR is 15-25%",
+        "feeBlock":"Fee per decline when account is blocked (post-block rate)"
+      }
+    },
+    "events":[
+      {"day":15,"type":"topup","value":3000,"_comment":"Example: top-up $3000 on day 15"},
+      {"day":30,"type":"topup","value":5000,"_comment":"Example: another top-up on day 30"}
+    ],
+    "events_hints":"Add events to model real behavior. Remove the examples above and add your own. Supported types: topup, set_verif, pause_verif, resume_verif, custom"
+  };
+
+  const json=JSON.stringify(template,null,2);
+  dl(json,'decline_fee_template.json','application/json');
+}
+
+function importJSON(input){
+  const file=input.files[0];
+  if(!file)return;
+  const reader=new FileReader();
+  reader.onload=function(e){
+    try{
+      const data=JSON.parse(e.target.result);
+      if(!data.params)throw new Error('Missing "params" section');
+      const p=data.params;
+      const f=data.fees||{};
+
+      // Fill params
+      if(p.startDate)$('startDate').value=p.startDate;
+      if(p.simDays)$('simDays').value=p.simDays;
+      if(p.merchant){const sel=$('merchant');for(let i=0;i<sel.options.length;i++){if(sel.options[i].value===p.merchant){sel.selectedIndex=i;break;}}}
+      if(p.startBalance!=null)$('startBalance').value=p.startBalance;
+      if(p.verifPerDay!=null){$('baseVerify').value=p.verifPerDay;$('vVal').textContent=p.verifPerDay;}
+      if(p.randomVerif!=null)$('randomVerify').checked=p.randomVerif;
+      if(p.avgTxnMin!=null)$('avgTxnMin').value=p.avgTxnMin;
+      if(p.avgTxnMax!=null)$('avgTxnMax').value=p.avgTxnMax;
+      if(p.delayMin!=null)$('delayMin').value=p.delayMin;
+      if(p.delayMax!=null)$('delayMax').value=p.delayMax;
+      if(p.retries!=null)$('retries').value=p.retries;
+      if(p.chargeRate!=null)$('chargeRate').value=p.chargeRate;
+      if(p.recoveryRate!=null)$('recoveryRate').value=p.recoveryRate;
+
+      // Fill fees
+      if(f.graceDays!=null)$('graceDays').value=f.graceDays;
+      if(f.drWindow!=null)$('drWindow').value=f.drWindow;
+      if(f.suspendPct!=null)$('suspendPct').value=f.suspendPct;
+      if(f.blockEnabled!=null)$('blockEnabled').checked=f.blockEnabled;
+      if(f.fee_5_10!=null)$('fee1').value=f.fee_5_10;
+      if(f.fee_10_15!=null)$('fee2').value=f.fee_10_15;
+      if(f.fee_15_25!=null)$('fee3').value=f.fee_15_25;
+      if(f.feeBlock!=null)$('feeBlock').value=f.feeBlock;
+
+      // Update dual-range sliders
+      updDR('txn');updDR('delay');
+
+      // Import events
+      if(data.events&&Array.isArray(data.events)){
+        events=[];
+        const maxDays=+$('simDays').value;
+        for(const ev of data.events){
+          if(!ev.day||!ev.type)continue;
+          if(ev.day<1||ev.day>maxDays)continue;
+          const e={day:ev.day,type:ev.type,p1:0};
+          if(ev.type==='topup')e.p1=ev.value||0;
+          else if(ev.type==='set_verif')e.p1=ev.value||0;
+          else if(ev.type==='pause_verif')e.p1=0;
+          else if(ev.type==='resume_verif')e.p1=+$('baseVerify').value;
+          else if(ev.type==='custom'){e.p1=ev.auth||0;e.p2=ev.declined||0;e.p3=ev.verif||0;}
+          events.push(e);
+        }
+        events.sort((a,b)=>a.day-b.day);
+        renderEv();
+      }
+
+      // Switch to Tab 1 if on Tab 2
+      switchTab('sim');
+
+      alert(`Імпорт успішний!\n\n✅ Параметри заповнені\n✅ ${events.length} подій додано\n\nНатисніть "Запустити симуляцію" для моделяції.`);
+    }catch(err){
+      alert('Помилка імпорту: '+err.message);
+    }
+    input.value='';
+  };
+  reader.readAsText(file);
+}
+
+function dl(content,filename,mime){
+  const blob=new Blob([content],{type:mime+';charset=utf-8'});
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement('a');
+  a.href=url;a.download=filename;
+  document.body.appendChild(a);a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+}
+</script>
+</body>
+</html>

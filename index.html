@@ -96,6 +96,10 @@
   .parsed-stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:10px;margin-top:16px}
   .parsed-stat{background:var(--input-bg);border-radius:8px;padding:10px;text-align:center;border:1px solid var(--border)}
   .parsed-stat .val{font-size:18px;font-weight:700;color:var(--accent)}.parsed-stat .lbl{font-size:11px;color:var(--muted);margin-top:2px}
+  .fee-tabs{display:flex;gap:0;margin-bottom:16px;border-bottom:2px solid var(--border)}
+  .fee-tab{padding:8px 16px;font-size:13px;font-weight:600;cursor:pointer;border:none;background:none;color:var(--muted);border-bottom:2px solid transparent;margin-bottom:-2px;transition:all .15s}
+  .fee-tab:hover{color:var(--text)}.fee-tab.active{color:var(--accent);border-bottom-color:var(--accent)}
+  .fee-tab-content{display:none}.fee-tab-content.active{display:block}
   .retry-tax-card{background:linear-gradient(135deg,#fef2f2,#fff7ed);border:1px solid #fecaca;border-radius:12px;padding:20px;margin-bottom:20px}
   .retry-tax-card h2{font-size:17px;font-weight:600;margin-bottom:12px;color:var(--red)}
   .retry-tax-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:12px}
@@ -191,40 +195,62 @@
 
       <div class="card" id="feeCard">
         <h2 data-i18n="fee_rules">Тарифікація (Fee Rules)</h2>
-        <div class="form-grid">
-          <div class="form-group">
-            <label><span data-i18n="grace_period">Grace period (днів)</span><span class="info-tip">i<span class="tip-text" data-i18n-tip="tip_grace">Перші дні після старту — DR трекається, але fee = $0.</span></span></label>
-            <input type="number" id="graceDays" value="7" min="0" max="90">
+        <div class="fee-tabs">
+          <button class="fee-tab active" onclick="switchFeeMode('tier','sim')" id="feeTabTier" data-i18n="fee_tier_based">Tier Based</button>
+          <button class="fee-tab" onclick="switchFeeMode('simple','sim')" id="feeTabSimple" data-i18n="fee_simple">Simple</button>
+        </div>
+        <div id="feeTierContent" class="fee-tab-content active">
+          <div class="form-grid">
+            <div class="form-group">
+              <label><span data-i18n="grace_period">Grace period (днів)</span><span class="info-tip">i<span class="tip-text" data-i18n-tip="tip_grace">Перші дні після старту — DR трекається, але fee = $0.</span></span></label>
+              <input type="number" id="graceDays" value="7" min="0" max="90">
+            </div>
+            <div class="form-group">
+              <label><span data-i18n="dr_window">DR window (днів)</span><span class="info-tip">i<span class="tip-text" data-i18n-tip="tip_dr_window">Rolling window для розрахунку DR. Стандарт 7 днів.</span></span></label>
+              <input type="number" id="drWindow" value="7" min="1" max="30">
+            </div>
+            <div class="form-group">
+              <label><span data-i18n="suspend_threshold">Suspend threshold %</span><span class="info-tip">i<span class="tip-text" data-i18n-tip="tip_suspend">DR при якому блокування. Блок = стоп нових верифікацій (картки далі працюють). Якщо DR знизиться — автоматичне розблокування.</span></span></label>
+              <input type="number" id="suspendPct" value="25" min="1" max="100">
+            </div>
+            <div class="form-group" style="grid-column:1/-1">
+              <label style="display:flex;align-items:center;gap:8px;cursor:pointer">
+                <input type="checkbox" id="blockEnabled" checked style="accent-color:var(--accent);width:18px;height:18px">
+                <span data-i18n="block_account">Блокування акаунту</span><span class="info-tip">i<span class="tip-text" data-i18n-tip="tip_block">Увімкнено: при DR ≥ threshold — стоп верифікацій + post-block fee. Картки далі працюють, при зниженні DR — розблокування. Вимкнено: блокування не відбувається, fee за тірами незалежно від DR.</span></span>
+              </label>
+            </div>
+            <div class="form-group">
+              <label>Fee 5-10% DR</label>
+              <input type="number" id="fee1" value="0.15" step="0.01" min="0">
+            </div>
+            <div class="form-group">
+              <label>Fee 10-15% DR</label>
+              <input type="number" id="fee2" value="0.25" step="0.01" min="0">
+            </div>
+            <div class="form-group">
+              <label>Fee 15-25% DR</label>
+              <input type="number" id="fee3" value="0.75" step="0.01" min="0">
+            </div>
+            <div class="form-group">
+              <label>Post-block fee</label>
+              <input type="number" id="feeBlock" value="0.10" step="0.01" min="0">
+            </div>
           </div>
-          <div class="form-group">
-            <label><span data-i18n="dr_window">DR window (днів)</span><span class="info-tip">i<span class="tip-text" data-i18n-tip="tip_dr_window">Rolling window для розрахунку DR. Стандарт 7 днів.</span></span></label>
-            <input type="number" id="drWindow" value="7" min="1" max="30">
-          </div>
-          <div class="form-group">
-            <label><span data-i18n="suspend_threshold">Suspend threshold %</span><span class="info-tip">i<span class="tip-text" data-i18n-tip="tip_suspend">DR при якому блокування. Блок = стоп нових верифікацій (картки далі працюють). Якщо DR знизиться — автоматичне розблокування.</span></span></label>
-            <input type="number" id="suspendPct" value="25" min="1" max="100">
-          </div>
-          <div class="form-group" style="grid-column:1/-1">
-            <label style="display:flex;align-items:center;gap:8px;cursor:pointer">
-              <input type="checkbox" id="blockEnabled" checked style="accent-color:var(--accent);width:18px;height:18px">
-              <span data-i18n="block_account">Блокування акаунту</span><span class="info-tip">i<span class="tip-text" data-i18n-tip="tip_block">Увімкнено: при DR ≥ threshold — стоп верифікацій + post-block fee. Картки далі працюють, при зниженні DR — розблокування. Вимкнено: блокування не відбувається, fee за тірами незалежно від DR.</span></span>
-            </label>
-          </div>
-          <div class="form-group">
-            <label>Fee 5-10% DR</label>
-            <input type="number" id="fee1" value="0.15" step="0.01" min="0">
-          </div>
-          <div class="form-group">
-            <label>Fee 10-15% DR</label>
-            <input type="number" id="fee2" value="0.25" step="0.01" min="0">
-          </div>
-          <div class="form-group">
-            <label>Fee 15-25% DR</label>
-            <input type="number" id="fee3" value="0.75" step="0.01" min="0">
-          </div>
-          <div class="form-group">
-            <label>Post-block fee</label>
-            <input type="number" id="feeBlock" value="0.10" step="0.01" min="0">
+        </div>
+        <div id="feeSimpleContent" class="fee-tab-content">
+          <div class="form-grid">
+            <div class="form-group">
+              <label><span data-i18n="grace_period">Grace period (днів)</span><span class="info-tip">i<span class="tip-text" data-i18n-tip="tip_grace">Перші дні після старту — DR трекається, але fee = $0.</span></span></label>
+              <input type="number" id="s_graceDays" value="7" min="0" max="90">
+            </div>
+            <div class="form-group">
+              <label><span data-i18n="dr_window">DR window (днів)</span><span class="info-tip">i<span class="tip-text" data-i18n-tip="tip_dr_window">Rolling window для розрахунку DR. Стандарт 7 днів.</span></span></label>
+              <input type="number" id="s_drWindow" value="7" min="1" max="30">
+            </div>
+            <div class="form-group">
+              <label><span data-i18n="fee_per_decline">Fee за деклайн ($)</span><span class="info-tip">i<span class="tip-text" data-i18n-tip="tip_simple_fee">Фіксована ціна за кожен деклайн після grace period. Незалежно від DR.</span></span></label>
+              <input type="number" id="s_feeFlat" value="0.25" step="0.01" min="0">
+            </div>
           </div>
         </div>
       </div>
@@ -361,40 +387,62 @@
       <div class="card">
         <h2 data-i18n="fee_rules">Тарифікація (Fee Rules)</h2>
         <p style="font-size:13px;color:var(--muted);margin-bottom:12px" data-i18n="fee_rules_hint">Змінюй тарифи та перезапускай — дані клієнта лишаться.</p>
-        <div class="form-grid">
-          <div class="form-group">
-            <label data-i18n="grace_period">Grace period (днів)</label>
-            <input type="number" id="c_graceDays" value="7" min="0" max="90">
+        <div class="fee-tabs">
+          <button class="fee-tab active" onclick="switchFeeMode('tier','client')" id="c_feeTabTier" data-i18n="fee_tier_based">Tier Based</button>
+          <button class="fee-tab" onclick="switchFeeMode('simple','client')" id="c_feeTabSimple" data-i18n="fee_simple">Simple</button>
+        </div>
+        <div id="c_feeTierContent" class="fee-tab-content active">
+          <div class="form-grid">
+            <div class="form-group">
+              <label data-i18n="grace_period">Grace period (днів)</label>
+              <input type="number" id="c_graceDays" value="7" min="0" max="90">
+            </div>
+            <div class="form-group">
+              <label data-i18n="dr_window">DR window (днів)</label>
+              <input type="number" id="c_drWindow" value="7" min="1" max="30">
+            </div>
+            <div class="form-group">
+              <label data-i18n="suspend_threshold">Suspend threshold %</label>
+              <input type="number" id="c_suspendPct" value="25" min="1" max="100">
+            </div>
+            <div class="form-group" style="grid-column:1/-1">
+              <label style="display:flex;align-items:center;gap:8px;cursor:pointer">
+                <input type="checkbox" id="c_blockEnabled" checked style="accent-color:var(--accent);width:18px;height:18px">
+                <span data-i18n="block_account">Блокування акаунту</span>
+              </label>
+            </div>
+            <div class="form-group">
+              <label>Fee 5-10% DR</label>
+              <input type="number" id="c_fee1" value="0.15" step="0.01" min="0">
+            </div>
+            <div class="form-group">
+              <label>Fee 10-15% DR</label>
+              <input type="number" id="c_fee2" value="0.25" step="0.01" min="0">
+            </div>
+            <div class="form-group">
+              <label>Fee 15-25% DR</label>
+              <input type="number" id="c_fee3" value="0.75" step="0.01" min="0">
+            </div>
+            <div class="form-group">
+              <label>Post-block fee</label>
+              <input type="number" id="c_feeBlock" value="0.10" step="0.01" min="0">
+            </div>
           </div>
-          <div class="form-group">
-            <label data-i18n="dr_window">DR window (днів)</label>
-            <input type="number" id="c_drWindow" value="7" min="1" max="30">
-          </div>
-          <div class="form-group">
-            <label data-i18n="suspend_threshold">Suspend threshold %</label>
-            <input type="number" id="c_suspendPct" value="25" min="1" max="100">
-          </div>
-          <div class="form-group" style="grid-column:1/-1">
-            <label style="display:flex;align-items:center;gap:8px;cursor:pointer">
-              <input type="checkbox" id="c_blockEnabled" checked style="accent-color:var(--accent);width:18px;height:18px">
-              <span data-i18n="block_account">Блокування акаунту</span>
-            </label>
-          </div>
-          <div class="form-group">
-            <label>Fee 5-10% DR</label>
-            <input type="number" id="c_fee1" value="0.15" step="0.01" min="0">
-          </div>
-          <div class="form-group">
-            <label>Fee 10-15% DR</label>
-            <input type="number" id="c_fee2" value="0.25" step="0.01" min="0">
-          </div>
-          <div class="form-group">
-            <label>Fee 15-25% DR</label>
-            <input type="number" id="c_fee3" value="0.75" step="0.01" min="0">
-          </div>
-          <div class="form-group">
-            <label>Post-block fee</label>
-            <input type="number" id="c_feeBlock" value="0.10" step="0.01" min="0">
+        </div>
+        <div id="c_feeSimpleContent" class="fee-tab-content">
+          <div class="form-grid">
+            <div class="form-group">
+              <label data-i18n="grace_period">Grace period (днів)</label>
+              <input type="number" id="cs_graceDays" value="7" min="0" max="90">
+            </div>
+            <div class="form-group">
+              <label data-i18n="dr_window">DR window (днів)</label>
+              <input type="number" id="cs_drWindow" value="7" min="1" max="30">
+            </div>
+            <div class="form-group">
+              <label><span data-i18n="fee_per_decline">Fee за деклайн ($)</span><span class="info-tip">i<span class="tip-text" data-i18n-tip="tip_simple_fee">Фіксована ціна за кожен деклайн після grace period. Незалежно від DR.</span></span></label>
+              <input type="number" id="cs_feeFlat" value="0.25" step="0.01" min="0">
+            </div>
           </div>
         </div>
       </div>
@@ -545,6 +593,10 @@ const I18N={
   tip_retries:{ua:'Скільки разів платформа повторює після fail. Ретраї розподіляються по днях за реальним патерном Google: ~45% в день 0, ~30% в день+1, ~15% в день+2, ~10% в день+3. 40% послідовностей відновлюються.',en:'How many times the platform retries after fail. Retries are spread across days following Google\'s real pattern: ~45% on day 0, ~30% on day+1, ~15% on day+2, ~10% on day+3. 40% of sequences recover.'},
   tip_charge_rate:{ua:'Не всі картки списують кожен день. Google Ads зазвичай списує раз на кілька днів. 10-15% = реалістично для media buying.',en:'Not all cards charge every day. Google Ads typically charges every few days. 10-15% = realistic for media buying.'},
   tip_recovery:{ua:'Відсоток retry-послідовностей, де останній retry успішний (баланс поповнився). За реальними даними Google ~40%.',en:'Percentage of retry sequences where last retry succeeds (balance was topped up). Based on real Google data ~40%.'},
+  fee_tier_based:{ua:'Tier Based',en:'Tier Based'},
+  fee_simple:{ua:'Simple',en:'Simple'},
+  fee_per_decline:{ua:'Fee за деклайн ($)',en:'Fee per decline ($)'},
+  tip_simple_fee:{ua:'Фіксована ціна за кожен деклайн після grace period. Незалежно від DR.',en:'Fixed price per decline after grace period. Regardless of DR.'},
   tip_grace:{ua:'Перші дні після старту — DR трекається, але fee = $0.',en:'First days after start — DR is tracked but fee = $0.'},
   tip_dr_window:{ua:'Rolling window для розрахунку DR. Стандарт 7 днів.',en:'Rolling window for DR calculation. Default 7 days.'},
   tip_suspend:{ua:'DR при якому блокування. Блок = стоп нових верифікацій (картки далі працюють). Якщо DR знизиться — автоматичне розблокування.',en:'DR at which blocking occurs. Block = stop new verifications (cards keep working). If DR drops — automatic unblock.'},
@@ -733,6 +785,24 @@ function switchTab(tab){
   $('tab-sim').classList.toggle('active',tab==='sim');
   $('tab-client').classList.toggle('active',tab==='client');
   $('results').classList.add('hidden');
+}
+
+// Fee mode: 'tier' or 'simple'
+let feeModeSim='tier',feeModeClient='tier';
+function switchFeeMode(mode,ctx){
+  if(ctx==='sim'){
+    feeModeSim=mode;
+    $('feeTabTier').classList.toggle('active',mode==='tier');
+    $('feeTabSimple').classList.toggle('active',mode==='simple');
+    $('feeTierContent').classList.toggle('active',mode==='tier');
+    $('feeSimpleContent').classList.toggle('active',mode==='simple');
+  }else{
+    feeModeClient=mode;
+    $('c_feeTabTier').classList.toggle('active',mode==='tier');
+    $('c_feeTabSimple').classList.toggle('active',mode==='simple');
+    $('c_feeTierContent').classList.toggle('active',mode==='tier');
+    $('c_feeSimpleContent').classList.toggle('active',mode==='simple');
+  }
 }
 
 // ===== DUAL RANGE =====
@@ -1167,8 +1237,12 @@ async function autofillBMG(){
 function runClientSim(){
   if(!clientParsed||!clientParsed.length)return alert(t('alert_upload_csv'));
 
-  const susPct=+$('c_suspendPct').value,grace=+$('c_graceDays').value,drWin=+$('c_drWindow').value;
-  const f1=+$('c_fee1').value,f2=+$('c_fee2').value,f3=+$('c_fee3').value,fB=+$('c_feeBlock').value;
+  const isSimple=feeModeClient==='simple';
+  const grace=isSimple?+$('cs_graceDays').value:+$('c_graceDays').value;
+  const drWin=isSimple?+$('cs_drWindow').value:+$('c_drWindow').value;
+  const susPct=isSimple?100:+$('c_suspendPct').value;
+  const f1=isSimple?0:+$('c_fee1').value,f2=isSimple?0:+$('c_fee2').value,f3=isSimple?0:+$('c_fee3').value,fB=isSimple?0:+$('c_feeBlock').value;
+  const flatFee=isSimple?+$('cs_feeFlat').value:0;
   const avgTxn=+$('c_avgTxn').value;
   const eurUsd=+$('c_eurUsd').value;
   const verifDelay=+$('c_verifDelay').value;
@@ -1178,7 +1252,7 @@ function runClientSim(){
   const topupMap={};
   if(topupsParsed){for(const t of topupsParsed){const amtUSD=t.isEUR?t.amount*eurUsd:t.amount;topupMap[t.date]=(topupMap[t.date]||0)+amtUSD;}}
 
-  const canBlock=$('c_blockEnabled').checked;
+  const canBlock=isSimple?false:$('c_blockEnabled').checked;
   simData=[];
   let blocked=false,cumFee=0,cumVerifs=0;
   // Track pending verifications using delay
@@ -1235,12 +1309,17 @@ function runClientSim(){
     }
 
     let tier,feeR,tCls;
-    if(isGrace){tier='Grace';feeR=0;tCls='tier-grace';}
-    else if(blocked){tier='Blocked';feeR=fB;tCls='tier-blocked';}
-    else if(dr<5){tier='0-5%';feeR=0;tCls='tier-free';}
-    else if(dr<10){tier='5-10%';feeR=f1;tCls='tier-warning';}
-    else if(dr<15){tier='10-15%';feeR=f2;tCls='tier-elevated';}
-    else{tier='15-25%';feeR=f3;tCls='tier-critical';}
+    if(isSimple){
+      if(isGrace){tier='Grace';feeR=0;tCls='tier-grace';}
+      else{tier='Flat';feeR=flatFee;tCls='tier-warning';}
+    }else{
+      if(isGrace){tier='Grace';feeR=0;tCls='tier-grace';}
+      else if(blocked){tier='Blocked';feeR=fB;tCls='tier-blocked';}
+      else if(dr<5){tier='0-5%';feeR=0;tCls='tier-free';}
+      else if(dr<10){tier='5-10%';feeR=f1;tCls='tier-warning';}
+      else if(dr<15){tier='10-15%';feeR=f2;tCls='tier-elevated';}
+      else{tier='15-25%';feeR=f3;tCls='tier-critical';}
+    }
 
     const dayFee=totalDecl*feeR;cumFee+=dayFee;
     // Fee from retries only
@@ -1269,9 +1348,13 @@ function runSim(){
   const startDate=new Date($('startDate').value+'T00:00:00');
   let verifRate=+$('baseVerify').value;
   const verifRand=$('randomVerify').checked;
-  const susPct=+$('suspendPct').value,grace=+$('graceDays').value,drWin=+$('drWindow').value;
-  const f1=+$('fee1').value,f2=+$('fee2').value,f3=+$('fee3').value,fB=+$('feeBlock').value;
-  const canBlock=$('blockEnabled').checked;
+  const isSimple=feeModeSim==='simple';
+  const grace=isSimple?+$('s_graceDays').value:+$('graceDays').value;
+  const drWin=isSimple?+$('s_drWindow').value:+$('drWindow').value;
+  const susPct=isSimple?100:+$('suspendPct').value;
+  const f1=isSimple?0:+$('fee1').value,f2=isSimple?0:+$('fee2').value,f3=isSimple?0:+$('fee3').value,fB=isSimple?0:+$('feeBlock').value;
+  const flatFee=isSimple?+$('s_feeFlat').value:0;
+  const canBlock=isSimple?false:$('blockEnabled').checked;
   const numRetries=+$('retries').value;
   const recovRate=(+$('recoveryRate').value)/100;
   const tMin=+$('avgTxnMin').value,tMax=Math.max(tMin,+$('avgTxnMax').value);
@@ -1402,12 +1485,17 @@ function runSim(){
     }
 
     let tier,feeR,tCls;
-    if(isGrace){tier='Grace';feeR=0;tCls='tier-grace';}
-    else if(blocked){tier='Blocked';feeR=fB;tCls='tier-blocked';}
-    else if(dr<5){tier='0-5%';feeR=0;tCls='tier-free';}
-    else if(dr<10){tier='5-10%';feeR=f1;tCls='tier-warning';}
-    else if(dr<15){tier='10-15%';feeR=f2;tCls='tier-elevated';}
-    else{tier='15-25%';feeR=f3;tCls='tier-critical';}
+    if(isSimple){
+      if(isGrace){tier='Grace';feeR=0;tCls='tier-grace';}
+      else{tier='Flat';feeR=flatFee;tCls='tier-warning';}
+    }else{
+      if(isGrace){tier='Grace';feeR=0;tCls='tier-grace';}
+      else if(blocked){tier='Blocked';feeR=fB;tCls='tier-blocked';}
+      else if(dr<5){tier='0-5%';feeR=0;tCls='tier-free';}
+      else if(dr<10){tier='5-10%';feeR=f1;tCls='tier-warning';}
+      else if(dr<15){tier='10-15%';feeR=f2;tCls='tier-elevated';}
+      else{tier='15-25%';feeR=f3;tCls='tier-critical';}
+    }
 
     const dayFee=totalDecl*feeR;cumFee+=dayFee;
     const retryFee=retryDecl*feeR;
@@ -1613,21 +1701,25 @@ events=[];renderEv();
 function getSimParams(){
   const isClient=$('tab-client').classList.contains('active');
   if(isClient){
+    const isSimple=feeModeClient==='simple';
     return{
       mode:'Client Model (CSV data)',
-      drWindow:+$('c_drWindow').value,
-      graceDays:+$('c_graceDays').value,
-      suspendPct:+$('c_suspendPct').value,
-      blockEnabled:$('c_blockEnabled').checked,
-      fees:{t1:+$('c_fee1').value,t2:+$('c_fee2').value,t3:+$('c_fee3').value,block:+$('c_feeBlock').value},
+      feeMode:feeModeClient,
+      drWindow:isSimple?+$('cs_drWindow').value:+$('c_drWindow').value,
+      graceDays:isSimple?+$('cs_graceDays').value:+$('c_graceDays').value,
+      suspendPct:isSimple?null:+$('c_suspendPct').value,
+      blockEnabled:isSimple?false:$('c_blockEnabled').checked,
+      fees:isSimple?{flat:+$('cs_feeFlat').value}:{t1:+$('c_fee1').value,t2:+$('c_fee2').value,t3:+$('c_fee3').value,block:+$('c_feeBlock').value},
       avgTxn:+$('c_avgTxn').value,
       eurUsd:+$('c_eurUsd').value,
       verifDelay:+$('c_verifDelay').value,
       startBal:+$('c_startBal').value
     };
   }
+  const isSimple=feeModeSim==='simple';
   return{
     mode:'Manual Simulation',
+    feeMode:feeModeSim,
     startDate:$('startDate').value,
     simDays:+$('simDays').value,
     merchant:$('merchant').value,
@@ -1639,11 +1731,11 @@ function getSimParams(){
     retries:+$('retries').value,
     chargeRate:+$('chargeRate').value,
     recoveryRate:+$('recoveryRate').value,
-    drWindow:+$('drWindow').value,
-    graceDays:+$('graceDays').value,
-    suspendPct:+$('suspendPct').value,
-    blockEnabled:$('blockEnabled').checked,
-    fees:{t1:+$('fee1').value,t2:+$('fee2').value,t3:+$('fee3').value,block:+$('feeBlock').value},
+    drWindow:isSimple?+$('s_drWindow').value:+$('drWindow').value,
+    graceDays:isSimple?+$('s_graceDays').value:+$('graceDays').value,
+    suspendPct:isSimple?null:+$('suspendPct').value,
+    blockEnabled:isSimple?false:$('blockEnabled').checked,
+    fees:isSimple?{flat:+$('s_feeFlat').value}:{t1:+$('fee1').value,t2:+$('fee2').value,t3:+$('fee3').value,block:+$('feeBlock').value},
     events:events.map(e=>({day:e.day,type:e.type,value:e.p1,...(e.p2!=null?{p2:e.p2}:{})}))
   };
 }
@@ -1787,7 +1879,18 @@ Day +3:            ~10% of retries
 retryFee = retryDeclines × feeRate(currentTier)
 \`\`\`
 
-### 8. Fee Tiers (Progressive)
+### 8. Fee Model${p.feeMode==='simple'?` (Simple — Flat Rate)
+
+Every decline after grace period is charged a flat fee of **$${p.fees.flat}**, regardless of the current DR.
+
+\`\`\`
+dayFee = totalDeclines(origDecl + retryDecl) × $${p.fees.flat}
+cumulativeFee += dayFee
+\`\`\`
+
+**Grace period**: First ${p.graceDays||7} days → DR is tracked, but fee = $0.
+
+No account blocking is applied in Simple mode.`:` (Tier Based — Progressive)
 
 Fees are charged per decline, with the rate determined by the current rolling DR:
 
@@ -1804,7 +1907,7 @@ dayFee = totalDeclines(origDecl + retryDecl) × feeRate(tier)
 cumulativeFee += dayFee
 \`\`\`
 
-**Grace period**: First ${p.fees.graceDays||7} days → DR is tracked, but fee = $0 regardless of tier.
+**Grace period**: First ${p.graceDays||7} days → DR is tracked, but fee = $0 regardless of tier.
 
 ### 9. Account Blocking
 
@@ -1816,7 +1919,7 @@ When rolling DR reaches **${p.suspendPct||25}%** (configurable threshold):
 - Post-block fee tier applies ($${p.fees.block}/decline)
 - **Auto-unblock**: When DR drops below threshold, verifications resume automatically
 
-This creates a dangerous feedback loop: block → no dilution → DR stays high → more fees.
+This creates a dangerous feedback loop: block → no dilution → DR stays high → more fees.`}
 
 ### 10. Balance & Top-ups
 
@@ -1887,9 +1990,16 @@ This creates a dangerous feedback loop: block → no dilution → DR stays high 
 `;
   }
 
-  md+=`| DR Window | ${p.drWindow} days |
+  md+=`| Fee Mode | ${p.feeMode==='simple'?'Simple (Flat Rate)':'Tier Based (Progressive)'} |
+| DR Window | ${p.drWindow} days |
 | Grace Period | ${p.graceDays} days |
-| Block Threshold | ${p.suspendPct}% DR |
+`;
+  if(p.feeMode==='simple'){
+    md+=`| Fee per Decline | $${p.fees.flat} |
+
+`;
+  }else{
+    md+=`| Block Threshold | ${p.suspendPct}% DR |
 | Block Enabled | ${p.blockEnabled?'Yes':'No'} |
 | Fee 5-10% DR | $${p.fees.t1} |
 | Fee 10-15% DR | $${p.fees.t2} |
@@ -1897,6 +2007,7 @@ This creates a dangerous feedback loop: block → no dilution → DR stays high 
 | Post-block Fee | $${p.fees.block} |
 
 `;
+  }
 
   if(p.events&&p.events.length){
     md+=`### Scheduled Events\n\n`;
@@ -2035,13 +2146,17 @@ function downloadTemplate(){
         "3. CHARGE ATTEMPTS: Each day, a percentage of active cards attempt to charge (typically 10-15%). If the account balance covers it → success. If not → DECLINE.",
         "4. DECLINE RATE (DR): Calculated as a rolling N-day window: declined auths / total auths × 100%. The window size is configurable (default 7 days).",
         "5. RETRIES: When a charge fails, the merchant (Google/Facebook) retries it multiple times across several days. Pattern: ~45% on day 0, ~30% day+1, ~15% day+2, ~10% day+3. About 40% of retry sequences eventually succeed (if balance is topped up).",
-        "6. FEE TIERS: Based on the rolling DR percentage:",
+        "6. FEE MODES: Two modes available (set in fees.feeMode):",
+        "   MODE 'tier' (Tier Based — Progressive):",
         "   - 0-5% DR → $0 fee per decline",
-        "   - 5-10% DR → $0.15 per decline",
-        "   - 10-15% DR → $0.25 per decline",
-        "   - 15-25% DR → $0.75 per decline",
-        "   - Post-block → $0.10 per decline",
-        "7. BLOCKING: When DR reaches the threshold (default 25%), new verifications stop. Existing cards KEEP charging. Auto-unblock when DR drops below threshold.",
+        "   - 5-10% DR → fees.fee_5_10 per decline",
+        "   - 10-15% DR → fees.fee_10_15 per decline",
+        "   - 15-25% DR → fees.fee_15_25 per decline",
+        "   - Post-block → fees.feeBlock per decline",
+        "   MODE 'simple' (Flat Rate):",
+        "   - Every decline after grace period → fees.feeFlat per decline, regardless of DR",
+        "   - No blocking, no tiers",
+        "7. BLOCKING (tier mode only): When DR reaches the threshold (default 25%), new verifications stop. Existing cards KEEP charging. Auto-unblock when DR drops below threshold.",
         "8. BALANCE: When balance hits $0, ALL charge attempts decline → DR spikes rapidly.",
         "",
         "### Key relationships:",
@@ -2105,6 +2220,7 @@ function downloadTemplate(){
       }
     },
     "fees":{
+      "feeMode":"tier",
       "graceDays":7,
       "drWindow":7,
       "suspendPct":25,
@@ -2113,15 +2229,18 @@ function downloadTemplate(){
       "fee_10_15":0.25,
       "fee_15_25":0.75,
       "feeBlock":0.10,
+      "feeFlat":0.25,
       "_hints":{
+        "feeMode":"'tier' = progressive tiers based on DR range; 'simple' = flat fee per decline regardless of DR",
         "graceDays":"Fee-free period at start (days). DR is tracked but no fees charged",
         "drWindow":"Rolling window for DR calculation (days). Default: 7",
-        "suspendPct":"DR threshold for account blocking (%)",
-        "blockEnabled":"true = block verifications when DR exceeds threshold",
-        "fee_5_10":"Fee per decline when DR is 5-10%",
-        "fee_10_15":"Fee per decline when DR is 10-15%",
-        "fee_15_25":"Fee per decline when DR is 15-25%",
-        "feeBlock":"Fee per decline when account is blocked (post-block rate)"
+        "suspendPct":"DR threshold for account blocking (%). Only used in 'tier' mode",
+        "blockEnabled":"true = block verifications when DR exceeds threshold. Only used in 'tier' mode",
+        "fee_5_10":"Fee per decline when DR is 5-10%. Only used in 'tier' mode",
+        "fee_10_15":"Fee per decline when DR is 10-15%. Only used in 'tier' mode",
+        "fee_15_25":"Fee per decline when DR is 15-25%. Only used in 'tier' mode",
+        "feeBlock":"Fee per decline when account is blocked. Only used in 'tier' mode",
+        "feeFlat":"Flat fee per decline regardless of DR. Only used in 'simple' mode"
       }
     },
     "events":[
@@ -2161,15 +2280,23 @@ function importJSON(input){
       if(p.chargeRate!=null)$('chargeRate').value=p.chargeRate;
       if(p.recoveryRate!=null)$('recoveryRate').value=p.recoveryRate;
 
-      // Fill fees
-      if(f.graceDays!=null)$('graceDays').value=f.graceDays;
-      if(f.drWindow!=null)$('drWindow').value=f.drWindow;
-      if(f.suspendPct!=null)$('suspendPct').value=f.suspendPct;
-      if(f.blockEnabled!=null)$('blockEnabled').checked=f.blockEnabled;
-      if(f.fee_5_10!=null)$('fee1').value=f.fee_5_10;
-      if(f.fee_10_15!=null)$('fee2').value=f.fee_10_15;
-      if(f.fee_15_25!=null)$('fee3').value=f.fee_15_25;
-      if(f.feeBlock!=null)$('feeBlock').value=f.feeBlock;
+      // Fill fees — detect mode
+      const fm=f.feeMode||'tier';
+      switchFeeMode(fm,'sim');
+      if(fm==='simple'){
+        if(f.graceDays!=null)$('s_graceDays').value=f.graceDays;
+        if(f.drWindow!=null)$('s_drWindow').value=f.drWindow;
+        if(f.feeFlat!=null)$('s_feeFlat').value=f.feeFlat;
+      }else{
+        if(f.graceDays!=null)$('graceDays').value=f.graceDays;
+        if(f.drWindow!=null)$('drWindow').value=f.drWindow;
+        if(f.suspendPct!=null)$('suspendPct').value=f.suspendPct;
+        if(f.blockEnabled!=null)$('blockEnabled').checked=f.blockEnabled;
+        if(f.fee_5_10!=null)$('fee1').value=f.fee_5_10;
+        if(f.fee_10_15!=null)$('fee2').value=f.fee_10_15;
+        if(f.fee_15_25!=null)$('fee3').value=f.fee_15_25;
+        if(f.feeBlock!=null)$('feeBlock').value=f.feeBlock;
+      }
 
       // Update dual-range sliders
       updDR('txn');updDR('delay');

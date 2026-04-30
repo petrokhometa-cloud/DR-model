@@ -4,6 +4,15 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Decline Fee Simulator — Spendbase</title>
+<script>
+(function(){
+  const k='_sb_auth';
+  if(sessionStorage.getItem(k)==='1') return;
+  const p=prompt('Enter password to access the simulator:');
+  if(p==='drmodel_*&%#jdhfn129'){sessionStorage.setItem(k,'1');}
+  else{document.documentElement.innerHTML='<body style="display:flex;align-items:center;justify-content:center;height:100vh;font-family:sans-serif;background:#f5f6fa"><h2 style="color:#6b7085">Access denied</h2></body>';throw new Error('auth');}
+})();
+</script>
 <style>
   :root{--bg:#f5f6fa;--card:#fff;--border:#e2e5ed;--text:#1e1e2e;--muted:#6b7085;--green:#16a34a;--yellow:#ca8a04;--orange:#ea580c;--red:#dc2626;--darkred:#991b1b;--blue:#2563eb;--accent:#6366f1;--accent-light:#eef2ff;--input-bg:#f8f9fc;--teal:#0d9488}
   *{box-sizing:border-box;margin:0;padding:0}
@@ -1523,7 +1532,7 @@ function renderResults(){
   $('results').classList.remove('hidden');
   // Update DR window label in headers and legend
   const curTab=$('tab-client').classList.contains('active')?'client':'sim';
-  const drW=curTab==='client'?+$('c_drWindow').value:+$('drWindow').value;
+  const drW=curTab==='client'?(feeModeClient==='simple'?+$('cs_drWindow').value:+$('c_drWindow').value):(feeModeSim==='simple'?+$('s_drWindow').value:+$('drWindow').value);
   const drLabel=drW+'d DR';
   $('thDR').textContent=drLabel;
   $('thDR').title=lang==='en'?`Observed DR — rolling ${drW}-day window. All declines (orig + retry) / all authorizations`:`Observed DR — rolling ${drW}d window. Всі деклайни (orig + retry) / всі авторизації`;
@@ -1547,7 +1556,7 @@ function renderResults(){
   const origFee=last.cumFee-totalRetryFee;
   // True LT DR (without retries)
   const trueAuth=tAuth-totalRetryDecl-totalRetryRecov;
-  const trueLTDR=trueAuth>0?(totalOrigDecl/trueAuth*100):0;
+  const trueLTDR=trueAuth>0?Math.min(100,(totalOrigDecl/trueAuth*100)):0;
 
   // Open verifications aggregates
   const maxOpenVerifs=Math.max(...simData.map(d=>d.openVerifs));
@@ -1570,7 +1579,7 @@ function renderResults(){
   if(totalRetryDecl>0||totalRetryRecov>0){
     $('retryTaxPanel').classList.remove('hidden');
     const retryPct=tDec>0?((totalRetryDecl/tDec)*100).toFixed(1):0;
-    const insufficientCost=totalRetryFee;
+    const insufficientCost=simData.filter(d=>d.bal===0).reduce((s,d)=>s+d.dayFee,0);
     $('retryTaxGrid').innerHTML=`
       <div class="retry-tax-item"><div class="val">${fmt(totalOrigDecl)}</div><div class="lbl">${t('rt_orig_decl')}</div></div>
       <div class="retry-tax-item"><div class="val" style="color:var(--red)">${fmt(totalRetryDecl)}</div><div class="lbl">${t('rt_retry_decl')}</div></div>
@@ -1768,7 +1777,7 @@ function exportMD(){
   const totalRetryRecov=simData.reduce((s,d)=>s+(d.retryRecov||0),0);
   const totalRetryFee=simData.reduce((s,d)=>s+d.retryFee,0);
   const trueAuth=tAuth-totalRetryDecl-totalRetryRecov;
-  const trueLTDR=trueAuth>0?(totalOrigDecl/trueAuth*100):0;
+  const trueLTDR=trueAuth>0?Math.min(100,(totalOrigDecl/trueAuth*100)):0;
   const maxOpenVerifs=Math.max(...simData.map(d=>d.openVerifs));
   const totalVerifs=simData.reduce((s,d)=>s+d.vfy,0);
   const feeRatio=tSpend>0?(last.cumFee/tSpend*100):0;
